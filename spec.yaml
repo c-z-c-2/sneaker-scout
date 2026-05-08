@@ -1,0 +1,722 @@
+openapi: 3.0.3
+info:
+  title: Sneaker Scout API surface
+  version: "1.0.0"
+  description: |
+    The Python backend (`sneaker-scout-backend/`) does **not** expose any HTTP
+    endpoints — it is a Selenium scraper that writes scraped data directly into
+    Supabase. The de facto runtime API the frontend talks to is therefore the
+    Supabase REST (PostgREST) and Auth surface, plus a small set of CLI
+    invocations for running the scraper.
+
+    This document covers both:
+      1. **Supabase REST API** — auto-generated from the schema, called from
+         the frontend via `@supabase/supabase-js`. All examples are also
+         expressible as raw `curl` calls against the same URLs.
+      2. **Supabase Auth API** — sign-up / sign-in / token refresh.
+      3. **Scraper CLI** — entry points for the Python pipeline (not HTTP).
+
+    See `aussie-kicks-tracker/SITEMAP.md` for which page consumes which
+    endpoints.
+
+servers:
+  - url: https://ltjxebklcstqnddspoxr.supabase.co
+    description: Supabase project (production)
+
+# ----------------------------------------------------------------------
+# Auth
+# ----------------------------------------------------------------------
+# The anon publishable key lives in
+# aussie-kicks-tracker/src/integrations/supabase/client.ts. The service-role
+# key (used by the backend scraper) MUST NOT ship to the browser.
+security:
+  - apiKeyAnon: []
+    bearerAuth: []
+
+components:
+  securitySchemes:
+    apiKeyAnon:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anon publishable key. Required on every request.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        User access token (JWT) issued by `/auth/v1/token`. Sent as
+        `Authorization: Bearer <jwt>`. Required for any row protected by RLS
+        (e.g. `user_favorites`).
+
+  # ------------------------------------------------------------------
+  # Schemas mirror the tables in init.sql / Supabase types.ts.
+  # Only fields the frontend reads or writes are documented here.
+  # ------------------------------------------------------------------
+  schemas:
+    Brand:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: "Salomon" }
+        logo_url: { type: string, nullable: true }
+
+    Retailer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: "Salomon AU" }
+        logo_url: { type: string, nullable: true }
+        website_url: { type: string, nullable: true }
+
+    Size:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        us_size: { type: number, example: 9.5 }
+        uk_size: { type: number, example: 8.5 }
+        eu_size: { type: number, example: 43 }
+
+    Sneaker:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: "Salomon XT-6 Expanse" }
+        model: { type: string, nullable: true }
+        release_date: { type: string, format: date, nullable: true }
+        description: { type: string, nullable: true }
+        brand_id: { type: string, format: uuid }
+
+    Colorway:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        sneaker_id: { type: string, format: uuid }
+        name: { type: string, example: "Black/Phantom" }
+        color_code: { type: string, nullable: true, example: "Black/Phantom" }
+        image_url: { type: string, nullable: true }
+
+    Price:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        colorway_id: { type: string, format: uuid }
+        retailer_id: { type: string, format: uuid }
+        price: { type: number, format: float, example: 329.95 }
+        original_price: { type: number, format: float, nullable: true }
+        is_available: { type: boolean }
+        product_url: { type: string, nullable: true, description: "Per-product URL on the retailer site, used by the 'view at retailer' link." }
+
+    SneakerSize:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        colorway_id: { type: string, format: uuid }
+        retailer_id: { type: string, format: uuid }
+        size_id: { type: string, format: uuid }
+        is_available: { type: boolean }
+
+    PriceHistory:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        colorway_id: { type: string, format: uuid }
+        retailer_id: { type: string, format: uuid, nullable: true }
+        price: { type: number, format: float }
+        recorded_at: { type: string, format: date-time }
+
+    UserFavorite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        sneaker_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+
+    AuthSession:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: "bearer" }
+        expires_in: { type: integer, example: 3600 }
+        refresh_token: { type: string }
+        user:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            email: { type: string, format: email }
+
+  parameters:
+    Select:
+      name: select
+      in: query
+      required: false
+      description: |
+        PostgREST column selection. Supports embedded resources via
+        `relation(col1, col2)`. Example:
+        `id,name,brand:brands(name),colorways(id,image_url)`
+      schema: { type: string }
+    Order:
+      name: order
+      in: query
+      required: false
+      description: 'Column to sort by, e.g. `name.asc` or `recorded_at.desc`.'
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 1000 }
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0 }
+    PreferCount:
+      name: Prefer
+      in: header
+      required: false
+      description: |
+        Use `count=exact` together with HEAD or GET to populate the
+        `Content-Range` response header with the total row count
+        (`Content-Range: 0-19/137`).
+      schema:
+        type: string
+        enum: [count=exact, count=planned, count=estimated, return=representation]
+
+paths:
+  # ===================================================================
+  # /rest/v1/sneakers — used by useSneakers, useSneaker, listing pages
+  # ===================================================================
+  /rest/v1/sneakers:
+    get:
+      summary: List sneakers
+      description: |
+        Paginated listing. The frontend embeds `brands` and `colorways`, and
+        when filters are active uses inner joins on `prices` or
+        `sneaker_sizes` so the count reflects the filtered set.
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/PreferCount'
+      responses:
+        '200':
+          description: Array of sneakers
+          headers:
+            Content-Range:
+              description: 'Range/total when Prefer:count=exact set, e.g. `0-19/137`.'
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Sneaker' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
+        function: useSneakers
+        notes: |
+          Calls supabase.from('sneakers').select(..., { count: 'exact' })
+          .order('name').range(offset, offset + limit - 1).
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,model,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url)&order=name&offset=0&limit=20" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Prefer: count=exact"
+      x-supabase-js-example: |
+        const { data, count, error } = await supabase
+          .from('sneakers')
+          .select(
+            'id, name, model, brand:brands(id, name, logo_url), colorways(id, name, color_code, image_url)',
+            { count: 'exact' }
+          )
+          .order('name')
+          .range(0, 19);
+      x-filtered-example: |
+        # Listing scoped to retailers + sizes (matches useSneakers when both
+        # filters are active) — inner-joins through sneaker_sizes:
+        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,colorways!inner(id,name,sneaker_sizes!inner(retailer_id,is_available,sizes!inner(us_size)))&colorways.sneaker_sizes.sizes.us_size=in.(9,9.5,10)&colorways.sneaker_sizes.is_available=eq.true&colorways.sneaker_sizes.retailer_id=in.(<retailerUuid1>,<retailerUuid2>)&order=name&limit=20" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Prefer: count=exact"
+
+  /rest/v1/sneakers/{id}:
+    get:
+      summary: Get one sneaker (by filter, single)
+      description: |
+        PostgREST has no path-id route — the frontend uses
+        `?id=eq.<uuid>` + `.single()` (which sets `Accept: application/vnd.pgrst.object+json`).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Sneaker (single object)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sneaker' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
+        function: useSneaker
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/sneakers?id=eq.<sneakerUuid>&select=id,name,model,release_date,description,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url,sneaker_sizes(size:sizes(us_size,uk_size,eu_size),is_available))" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Accept: application/vnd.pgrst.object+json"
+
+  # ===================================================================
+  # Static lookups
+  # ===================================================================
+  /rest/v1/brands:
+    get:
+      summary: List brands (lookup)
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Array of brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Brand' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
+        function: useBrands
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/brands?select=id,name,logo_url&order=name" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  /rest/v1/retailers:
+    get:
+      summary: List retailers (lookup)
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Array of retailers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Retailer' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
+        function: useRetailers
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/retailers?select=id,name&order=name" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  /rest/v1/sizes:
+    get:
+      summary: List sizes (lookup; us/uk/eu tuples)
+      description: |
+        Multiple rows can share a `us_size` because half-step UK/EU mappings
+        differ. The frontend de-duplicates client-side in `useSizes`.
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Array of sizes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Size' }
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/sizes?select=us_size&order=us_size" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  /rest/v1/colorways:
+    get:
+      summary: List colorways
+      description: |
+        Used both as a direct read (e.g. `useColorwaysCount`, helper queries
+        in `sneakerQueries.ts`) and as an embedded resource on `sneakers`.
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - name: sneaker_id
+          in: query
+          required: false
+          schema: { type: string }
+          description: 'PostgREST eq filter, e.g. `sneaker_id=eq.<uuid>`.'
+      responses:
+        '200':
+          description: Array of colorways
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Colorway' }
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/colorways?sneaker_id=eq.<sneakerUuid>&select=id,name,color_code,image_url" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  # ===================================================================
+  # Pricing surfaces
+  # ===================================================================
+  /rest/v1/prices:
+    get:
+      summary: List retailer prices for one or more colorways
+      description: |
+        The frontend always filters by `colorway_id=in.(...)`. For the public
+        listing it also applies `is_available=eq.true` and (when active) a
+        retailer scope.
+      parameters:
+        - name: colorway_id
+          in: query
+          required: false
+          schema: { type: string }
+        - name: is_available
+          in: query
+          required: false
+          schema: { type: string, example: "eq.true" }
+        - name: retailer_id
+          in: query
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Array of prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Price' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
+        function: useSneakers (per-colorway/per-sneaker enrichment batch)
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/prices?colorway_id=in.(<cw1>,<cw2>)&is_available=eq.true&select=colorway_id,price,retailer_id" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+      x-cheapest-retailer-example: |
+        # findCheapestRetailer (src/lib/sneakerQueries.ts):
+        curl "$SUPABASE_URL/rest/v1/prices?colorway_id=eq.<colorwayUuid>&is_available=eq.true&select=id,price,retailer:retailers(id,name,logo_url)&order=price.asc&limit=1" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  /rest/v1/sneaker_sizes:
+    get:
+      summary: List size availability per (colorway, retailer)
+      description: |
+        One row per (colorway, retailer, size) tuple. The frontend embeds
+        `sizes!inner(us_size)` to filter by US size and may further filter on
+        `is_available`/`retailer_id`.
+      parameters:
+        - name: colorway_id
+          in: query
+          required: false
+          schema: { type: string }
+        - name: retailer_id
+          in: query
+          required: false
+          schema: { type: string }
+        - name: is_available
+          in: query
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/Select'
+      responses:
+        '200':
+          description: Array of size rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SneakerSize' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/lib/sneakerQueries.ts
+        function: fetchSizeAvailability
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/sneaker_sizes?colorway_id=eq.<colorwayUuid>&retailer_id=eq.<retailerUuid>&select=id,is_available,size:sizes(id,us_size,uk_size,eu_size)" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+      x-size-filter-example: |
+        # SneakerDetail uses this to grey out retailers that don't stock the
+        # active size filter:
+        curl "$SUPABASE_URL/rest/v1/sneaker_sizes?colorway_id=eq.<colorwayUuid>&is_available=eq.true&size.us_size=in.(9,9.5)&select=retailer_id,is_available,size:sizes!inner(us_size)" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  /rest/v1/price_history:
+    get:
+      summary: Append-only price history series
+      description: |
+        Written by the scraper's `update_supabase_daily.py` whenever a
+        retailer price changes. The frontend reads it for the trend sparkline
+        on the listing card and the full chart on the detail page.
+      parameters:
+        - name: colorway_id
+          in: query
+          required: false
+          schema: { type: string }
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: Array of price-history rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PriceHistory' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/lib/sneakerQueries.ts
+        function: fetchPriceHistory
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/price_history?colorway_id=eq.<colorwayUuid>&select=id,price,recorded_at,retailer:retailers(name)&order=recorded_at.asc" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+
+  # ===================================================================
+  # Favourites (RLS, signed-in only)
+  # ===================================================================
+  /rest/v1/user_favorites:
+    get:
+      summary: List the signed-in user's favourites
+      description: |
+        Protected by RLS on `user_id = auth.uid()`. Always pass the user JWT
+        as `Authorization: Bearer ...`. The frontend embeds the full sneaker
+        graph in the same call.
+      security:
+        - apiKeyAnon: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - name: user_id
+          in: query
+          required: false
+          description: 'Optional client-side filter; RLS enforces this server-side regardless.'
+          schema: { type: string }
+      responses:
+        '200':
+          description: Array of favourites
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/UserFavorite' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useFavorites.tsx
+        function: useFavorites
+      x-curl-example: |
+        curl "$SUPABASE_URL/rest/v1/user_favorites?user_id=eq.<userUuid>&select=id,sneaker:sneakers(id,name,model,release_date,description,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url))" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $USER_JWT"
+
+    post:
+      summary: Add a sneaker to favourites
+      security:
+        - apiKeyAnon: []
+          bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, sneaker_id]
+              properties:
+                user_id: { type: string, format: uuid }
+                sneaker_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Created
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useFavorites.tsx
+        function: useToggleFavorite (insert branch)
+      x-curl-example: |
+        curl -X POST "$SUPABASE_URL/rest/v1/user_favorites" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $USER_JWT" \
+          -H "Content-Type: application/json" \
+          -H "Prefer: return=representation" \
+          -d '{"user_id":"<userUuid>","sneaker_id":"<sneakerUuid>"}'
+
+    delete:
+      summary: Remove from favourites
+      security:
+        - apiKeyAnon: []
+          bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: sneaker_id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted (no body)
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useFavorites.tsx
+        function: useToggleFavorite (delete branch)
+      x-curl-example: |
+        curl -X DELETE "$SUPABASE_URL/rest/v1/user_favorites?user_id=eq.<userUuid>&sneaker_id=eq.<sneakerUuid>" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $USER_JWT"
+
+  # ===================================================================
+  # Auth
+  # ===================================================================
+  /auth/v1/signup:
+    post:
+      summary: Sign up a new user
+      description: Used by the `/auth` page (sign-up tab).
+      security:
+        - apiKeyAnon: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                data:
+                  type: object
+                  description: 'Custom user metadata, e.g. first_name / last_name.'
+                  properties:
+                    first_name: { type: string }
+                    last_name: { type: string }
+      responses:
+        '200':
+          description: User created (or pending email confirmation)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useAuth.tsx
+        function: signUp
+      x-curl-example: |
+        curl -X POST "$SUPABASE_URL/auth/v1/signup" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"email":"jane@example.com","password":"correcthorse","data":{"first_name":"Jane","last_name":"Doe"}}'
+
+  /auth/v1/token:
+    post:
+      summary: Sign in (password grant) or refresh tokens
+      description: |
+        Two grant types:
+          - `?grant_type=password` for sign-in.
+          - `?grant_type=refresh_token` to refresh.
+      security:
+        - apiKeyAnon: []
+      parameters:
+        - name: grant_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [password, refresh_token]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Session
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useAuth.tsx
+        function: signIn (uses signInWithPassword which posts here)
+      x-curl-example: |
+        curl -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Content-Type: application/json" \
+          -d '{"email":"jane@example.com","password":"correcthorse"}'
+
+  /auth/v1/logout:
+    post:
+      summary: Sign out (invalidate the current session)
+      security:
+        - apiKeyAnon: []
+          bearerAuth: []
+      responses:
+        '204':
+          description: Logged out
+      x-frontend-call:
+        file: aussie-kicks-tracker/src/hooks/useAuth.tsx
+        function: signOut
+      x-curl-example: |
+        curl -X POST "$SUPABASE_URL/auth/v1/logout" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $USER_JWT"
+
+  /auth/v1/user:
+    get:
+      summary: Get the current user from a JWT
+      security:
+        - apiKeyAnon: []
+          bearerAuth: []
+      responses:
+        '200':
+          description: User
+      x-curl-example: |
+        curl "$SUPABASE_URL/auth/v1/user" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Authorization: Bearer $USER_JWT"
+
+# ----------------------------------------------------------------------
+# Scraper CLI (NOT HTTP) — kept here so this file is the single source
+# of truth for "how do I drive the backend".
+# ----------------------------------------------------------------------
+x-scraper-cli:
+  description: |
+    The Python backend has no HTTP surface. Below are the entrypoints used
+    in production and during dev. All commands assume `cwd=/workspace` and a
+    valid `sneaker-scout-backend/.env` containing `SUPABASE_URL` and
+    `SUPABASE_SERVICE_KEY` (service-role key — server-side only).
+  commands:
+    - name: docker-compose-pipeline
+      description: |
+        Recommended path. Runs scrape → upload on the configured cadence
+        (`SCRAPE_INTERVAL_HOURS`, default 6). Persists scraped JSON and
+        upload logs in named volumes.
+      command: docker-compose up backend
+    - name: salomon-scrape
+      description: |
+        Scrape Salomon's listing pages and write the combined JSON to
+        `backend/jsons/salomon_products.json`. Module form requires the
+        `backend/` rename — Docker is the easier path.
+      command: python -m backend.salomon.pagination_scraper
+    - name: supabase-upload
+      description: |
+        Upsert a scraped JSON file into Supabase
+        (brands → sneakers → colorways → retailers → prices → sizes →
+        sneaker_sizes; appends `price_history` rows when a price changed).
+      command: python -m backend.data_upload.run_update --file=backend/jsons/salomon_products.json
+    - name: tests
+      description: 'Run the backend test suite (pytest).'
+      command: pytest sneaker-scout-backend/tests
+  notes: |
+    Known issue (CLAUDE.md): combine_product_info() in pagination_scraper.py
+    writes JSON keys `sneakers`, `brands`, `retailers` (plural), but
+    update_supabase_daily.py reads `sneaker`, `brand`, `retailer` (singular).
+    Running the scraper then the uploader end-to-end raises KeyError. The
+    JSON files in `jsons/` were produced by an older scraper and use the
+    singular format the uploader expects.
+
+# ----------------------------------------------------------------------
+# Update protocol — keep this file honest.
+# ----------------------------------------------------------------------
+x-maintenance:
+  rules:
+    - "When adding/removing a Supabase table the frontend reads, add or remove its /rest/v1/<table> path."
+    - "When changing a select(...) call in a way that affects the response shape, update the corresponding x-curl-example so it round-trips."
+    - "When adding a new scraper entrypoint, add it under x-scraper-cli.commands."
+    - "When changing the auth flow (sign-in, sign-up, redirects), update the /auth/v1/* sections."
+    - "Cross-reference: aussie-kicks-tracker/SITEMAP.md should be updated for any page that depends on changes here."
