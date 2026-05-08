@@ -676,39 +676,66 @@ paths:
 # ----------------------------------------------------------------------
 x-scraper-cli:
   description: |
-    The Python backend has no HTTP surface. Below are the entrypoints used
-    in production and during dev. All commands assume `cwd=/workspace` and a
-    valid `sneaker-scout-backend/.env` containing `SUPABASE_URL` and
+    The Python backend has no HTTP surface. Scraper packages
+    (`salomon/`, `hypedc/`) use relative intra-package imports, so they
+    can be invoked either as `python -m <retailer>.pagination_scraper`
+    from inside `sneaker-scout-backend/` (local dev) or as
+    `python -m backend.<retailer>.pagination_scraper` when `backend/` is
+    on `PYTHONPATH` (the Docker layout: `PYTHONPATH=/app`, package mounted
+    at `/app/backend/`). All upload commands need a valid
+    `sneaker-scout-backend/.env` with `SUPABASE_URL` and
     `SUPABASE_SERVICE_KEY` (service-role key — server-side only).
   commands:
     - name: docker-compose-pipeline
       description: |
-        Recommended path. Runs scrape → upload on the configured cadence
-        (`SCRAPE_INTERVAL_HOURS`, default 6). Persists scraped JSON and
-        upload logs in named volumes.
+        Periodic loop on the configured cadence (`SCRAPE_INTERVAL_HOURS`,
+        default 6). Persists scraped JSON and upload logs in named
+        volumes. NOTE: `entrypoint.sh` currently runs ONLY the salomon
+        stage — to put hypedc on the same cadence, add the equivalent
+        `python -m backend.hypedc.pagination_scraper` + matching upload
+        lines to entrypoint.sh.
       command: docker-compose up backend
-    - name: salomon-scrape
+    - name: salomon-scrape-local
       description: |
-        Scrape Salomon's listing pages and write the combined JSON to
-        `backend/jsons/salomon_products.json`. Module form requires the
-        `backend/` rename — Docker is the easier path.
-      command: python -m backend.salomon.pagination_scraper
-    - name: supabase-upload
+        Scrape Salomon, writing `jsons/salomon_products.json`. Cwd must
+        be `sneaker-scout-backend/`.
+      command: cd sneaker-scout-backend && python -m salomon.pagination_scraper
+    - name: salomon-scrape-docker
+      description: |
+        One-off salomon scrape inside the backend container.
+      command: docker-compose run --rm backend python -m backend.salomon.pagination_scraper
+    - name: hypedc-scrape-local
+      description: |
+        Scrape HypeDC, writing `jsons/hypedc_products.json`. If Selenium
+        can't reach the live site (Cloudflare, no Chrome on host), falls
+        back to the static fixtures in `hypedc/freesh/`.
+      command: cd sneaker-scout-backend && python -m hypedc.pagination_scraper
+    - name: hypedc-scrape-docker
+      description: |
+        One-off hypedc scrape inside the backend container. Required path
+        until entrypoint.sh learns about hypedc.
+      command: docker-compose run --rm backend python -m backend.hypedc.pagination_scraper
+    - name: supabase-upload-local
       description: |
         Upsert a scraped JSON file into Supabase
         (brands → sneakers → colorways → retailers → prices → sizes →
         sneaker_sizes; appends `price_history` rows when a price changed).
-      command: python -m backend.data_upload.run_update --file=backend/jsons/salomon_products.json
+        Replace the --file arg with whichever JSON you want to upload.
+      command: cd sneaker-scout-backend && python -m data_upload.run_update --file=jsons/hypedc_products.json
+    - name: supabase-upload-docker
+      description: |
+        Same upload step inside the container. Note the in-container path
+        prefix `backend/jsons/...`.
+      command: docker-compose run --rm backend python -m backend.data_upload.run_update --file=backend/jsons/hypedc_products.json
     - name: tests
       description: 'Run the backend test suite (pytest).'
-      command: pytest sneaker-scout-backend/tests
+      command: cd sneaker-scout-backend && pytest tests
   notes: |
-    Known issue (CLAUDE.md): combine_product_info() in pagination_scraper.py
-    writes JSON keys `sneakers`, `brands`, `retailers` (plural), but
-    update_supabase_daily.py reads `sneaker`, `brand`, `retailer` (singular).
-    Running the scraper then the uploader end-to-end raises KeyError. The
-    JSON files in `jsons/` were produced by an older scraper and use the
-    singular format the uploader expects.
+    Known issue (CLAUDE.md): historical versions of combine_product_info()
+    in pagination_scraper.py wrote plural JSON keys (`sneakers`, `brands`,
+    `retailers`), but update_supabase_daily.py reads the singular forms.
+    The current salomon and hypedc scrapers both produce the singular
+    shape; the JSON files in `jsons/` already use it.
 
 # ----------------------------------------------------------------------
 # Update protocol — keep this file honest.

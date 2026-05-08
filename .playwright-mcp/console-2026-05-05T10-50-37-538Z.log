@@ -1,0 +1,10 @@
+[      80ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=e17576c9:21550
+[12186607ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=e17576c9:21550
+[12187333ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=e17576c9:21550
+[12187709ms] [ERROR] inStockCount error: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch
+    at http://localhost…deps/@supabase_supabase-js.js?v=790aaa30:3916:24), hint: , code: } @ http://localhost:8080/src/hooks/useSneakers.tsx?t=1777978168175:222
+[12187723ms] [ERROR] Error fetching sneakers: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch
+    at http://localhost…deps/@supabase_supabase-js.js?v=790aaa30:3916:24), hint: , code: } @ http://localhost:8080/src/hooks/useSneakers.tsx?t=1777978168175:67
+[12187724ms] [ERROR] priceDropsCount sneakers query error: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch
+    at http://localhost…deps/@supabase_supabase-js.js?v=790aaa30:3916:24), hint: , code: } @ http://localhost:8080/src/hooks/useSneakers.tsx?t=1777978168175:276
+[12187853ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=e17576c9:21550

@@ -31,20 +31,48 @@ Uses `@` path alias mapped to `./src/`.
 
 ### Backend (`sneaker-scout-backend/`)
 
-The scraping pipeline runs in two steps. Scripts use `backend.` import prefix, so they must be invoked as modules from a parent directory where `sneaker-scout-backend/` is symlinked/renamed to `backend/`, **or via Docker** (recommended):
+The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then `data_upload/run_update.py` upserts that JSON into Supabase. All scraper packages (`salomon/`, `hypedc/`) use **relative intra-package imports** (`from . import …`), so they can be invoked via either:
+
+- `python -m <retailer>.pagination_scraper` from inside `sneaker-scout-backend/` (local dev), or
+- `python -m backend.<retailer>.pagination_scraper` from anywhere `backend/` is on `PYTHONPATH` (the Docker layout).
+
+#### Run locally (recommended for dev)
 
 ```bash
-# Recommended: run via Docker (handles the backend/ rename automatically)
+cd sneaker-scout-backend
+
+# Stage 1 — scrape (produces jsons/<retailer>_products.json)
+python -m salomon.pagination_scraper
+python -m hypedc.pagination_scraper
+
+# Stage 2 — upload (.env must define SUPABASE_URL + SUPABASE_SERVICE_KEY)
+python -m data_upload.run_update --file=jsons/salomon_products.json
+python -m data_upload.run_update --file=jsons/hypedc_products.json
+```
+
+Each stage is independent — you can re-run upload against an existing JSON without re-scraping.
+
+#### Run via Docker
+
+```bash
+# Periodic loop: scrape + upload every SCRAPE_INTERVAL_HOURS (default 6).
+# IMPORTANT: the loop in entrypoint.sh currently runs ONLY salomon. To
+# include hypedc on the same cadence, add two more lines to entrypoint.sh
+# (one to invoke `python -m backend.hypedc.pagination_scraper`, one to
+# upload `backend/jsons/hypedc_products.json`).
 docker-compose up backend
 
-# Manual (requires symlink: ln -s sneaker-scout-backend backend at workspace root)
-python -m backend.salomon.pagination_scraper
-python -m backend.data_upload.run_update --file=backend/jsons/salomon_products.json
+# Ad-hoc one-off inside the container — works for any retailer:
+docker-compose run --rm backend python -m backend.hypedc.pagination_scraper
+docker-compose run --rm backend python -m backend.data_upload.run_update \
+    --file=backend/jsons/hypedc_products.json
 ```
+
+Inside the container `PYTHONPATH=/app` and the package is mounted at `/app/backend/`, so in-container runs must use the `backend.<retailer>.…` form.
 
 Requires a `.env` file in `sneaker-scout-backend/` (copy from `.env.example`) with `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`. Optional: `CHROMEDRIVER_PATH` to override the Chrome/Selenium binary.
 
-Python dependencies: `selenium`, `webdriver-manager`, `beautifulsoup4`, `supabase`, `python-dotenv`, `pandas`.
+Python dependencies: `selenium`, `webdriver-manager`, `beautifulsoup4`, `supabase`, `python-dotenv`, `pandas`, `pydantic>=2.0`.
 
 ### Docker (full stack)
 
@@ -53,7 +81,7 @@ docker-compose up                        # Production build (frontend on :8080)
 docker-compose -f docker-compose.dev.yml up  # Dev with hot-reload (src/ volume-mounted)
 ```
 
-The backend container runs the scrape→upload pipeline every `SCRAPE_INTERVAL_HOURS` (default 6). Scraped JSON and upload logs are persisted in named volumes.
+The backend container runs a scrape→upload pipeline every `SCRAPE_INTERVAL_HOURS` (default 6). **Today the loop only runs the salomon scraper** — see the note above for adding hypedc to the same cadence. Scraped JSON and upload logs are persisted in named volumes.
 
 ## Architecture
 

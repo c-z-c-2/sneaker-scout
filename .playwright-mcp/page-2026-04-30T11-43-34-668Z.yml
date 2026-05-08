@@ -1,0 +1,15 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+          - heading "SneakTrack AU" [level=1] [ref=e11]
+        - generic [ref=e12]:
+          - generic [ref=e14]:
+            - img [ref=e15]
+            - searchbox "Search sneakers..." [ref=e18]
+          - button "Sign In" [ref=e19] [cursor=pointer]
+    - paragraph [ref=e23]: Loading sneakers...

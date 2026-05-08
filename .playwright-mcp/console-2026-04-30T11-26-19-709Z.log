@@ -1,0 +1,57 @@
+[     429ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:21550
+[  293863ms] ReferenceError: sizes is not defined
+    at FilterSidebar (http://localhost:8080/src/components/FilterSidebar.tsx?t=1777548673410:611:39)
+    at renderWithHooks (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:11548:26)
+    at mountIndeterminateComponent (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:14926:21)
+    at beginWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3699:24)
+    at invokeGuardedCallback (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3733:39)
+    at beginWork$1 (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19765:15)
+    at performUnitOfWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19198:20)
+    at workLoopSync (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19137:13)
+[  293868ms] ReferenceError: sizes is not defined
+    at FilterSidebar (http://localhost:8080/src/components/FilterSidebar.tsx?t=1777548673410:611:39)
+    at renderWithHooks (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:11548:26)
+    at mountIndeterminateComponent (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:14926:21)
+    at beginWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3699:24)
+    at invokeGuardedCallback (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:3733:39)
+    at beginWork$1 (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19765:15)
+    at performUnitOfWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19198:20)
+    at workLoopSync (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19137:13)
+[  293870ms] [ERROR] The above error occurred in the <FilterSidebar> component:
+
+    at FilterSidebar (http://localhost:8080/src/components/FilterSidebar.tsx?t=1777548673410:21:61)
+    at div
+    at div
+    at div
+    at div
+    at Index (http://localhost:8080/src/pages/Index.tsx?t=1777548668755:28:37)
+    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=b4c71afc:4069:5)
+    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=b4c71afc:4508:5)
+    at FilterProvider (http://localhost:8080/src/contexts/FilterContext.tsx?t=1777548650661:16:34)
+    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=b4c71afc:4451:15)
+    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=b4c71afc:5196:5)
+    at AuthProvider (http://localhost:8080/src/hooks/useAuth.tsx:14:32)
+    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-MW4DX7GP.js?v=21432ac3:32:15)
+    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=8d8d7926:59:5)
+    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=7b9bf97f:2794:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:14031
+[  293873ms] ReferenceError: sizes is not defined
+    at FilterSidebar (http://localhost:8080/src/components/FilterSidebar.tsx?t=1777548673410:611:39)
+    at renderWithHooks (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:11548:26)
+    at mountIndeterminateComponent (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:14926:21)
+    at beginWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:15914:22)
+    at beginWork$1 (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19753:22)
+    at performUnitOfWork (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19198:20)
+    at workLoopSync (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19137:13)
+    at renderRootSync (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:19116:15)
+    at recoverFromConcurrentError (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:18736:28)
+    at performSyncWorkOnRoot (http://localhost:8080/node_modules/.vite/deps/chunk-FJ2A54M7.js?v=21432ac3:18879:28)
+[  337496ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8080/src/pages/SneakerDetail.tsx?t=1777548717141:0
+[  337498ms] [ERROR] [hmr] Failed to reload /src/pages/SneakerDetail.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:8080/@vite/client:175

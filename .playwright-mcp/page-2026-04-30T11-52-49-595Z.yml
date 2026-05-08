@@ -1,0 +1,58 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - button "Back to Home" [ref=e7] [cursor=pointer]:
+        - img
+        - text: Back to Home
+      - button "Add to Favorites" [ref=e8] [cursor=pointer]:
+        - img
+        - text: Add to Favorites
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - img "AERO GLIDE 4 MEN'S - silvercloud/silvercloud/white" [ref=e13]
+        - generic [ref=e14]:
+          - heading "Available Colorways" [level=3] [ref=e16]
+          - generic [ref=e19] [cursor=pointer]:
+            - img "silvercloud/silvercloud/white" [ref=e20]
+            - paragraph [ref=e21]: silvercloud/silvercloud/white
+            - paragraph
+        - generic [ref=e22]:
+          - heading "Available Sizes" [level=3] [ref=e24]
+          - generic [ref=e26]:
+            - button "7.5 UK" [ref=e27] [cursor=pointer]
+            - button "8 UK" [ref=e28] [cursor=pointer]
+            - button "8.5 UK" [ref=e29] [cursor=pointer]
+            - button "9 UK" [ref=e30] [cursor=pointer]
+            - button "9.5 UK" [ref=e31] [cursor=pointer]
+            - button "10 UK" [ref=e32] [cursor=pointer]
+            - button "10.5 UK" [ref=e33] [cursor=pointer]
+            - button "11 UK" [ref=e34] [cursor=pointer]
+            - button "11.5 UK" [ref=e35] [cursor=pointer]
+            - button "12.5 UK" [ref=e36] [cursor=pointer]
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e41]:
+            - heading "AERO GLIDE 4 MEN'S" [level=3] [ref=e42]
+            - paragraph [ref=e43]: Salomon
+            - paragraph [ref=e44]: AERO
+          - paragraph [ref=e46]: Ultimate comfort, outstanding performance in our go-to road running shoe. Enjoy effortless comfort and pace with Aero Glide 4. Our go-to road running shoe returns with seamless uppers for a glove-like fit, and improved breathability and comfort. Featuring energy-loaded cushioning and high-stack foam for cushioned, yet dynamic strides. High comfort and a flawless running experience guaranteed.
+        - generic [ref=e47]:
+          - heading "Price History" [level=3] [ref=e49]
+          - generic [ref=e52]: No price history available
+        - generic [ref=e53]:
+          - heading "Retailer Prices" [level=3] [ref=e55]
+          - generic [ref=e56]:
+            - button "Salomon Australia" [active] [pressed] [ref=e58] [cursor=pointer]
+            - generic [ref=e68]:
+              - generic [ref=e69]: Filtered by 1 retailer
+              - button "Clear" [ref=e70] [cursor=pointer]
+            - generic [ref=e60] [cursor=pointer]:
+              - generic [ref=e62]:
+                - paragraph [ref=e63]: Salomon Australia
+                - generic [ref=e64]: In Stock
+              - generic [ref=e65]:
+                - generic [ref=e66]: $259.99
+                - button [ref=e67]:
+                  - img

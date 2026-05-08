@@ -1,0 +1,53 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - button "Back to Home" [ref=e7] [cursor=pointer]:
+        - img
+        - text: Back to Home
+      - button "Add to Favorites" [ref=e8] [cursor=pointer]:
+        - img
+        - text: Add to Favorites
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - img "X ULTRA 5 MID GORE-TEX MEN'S - darkgullgray/asphalt/willow" [ref=e13]
+        - generic [ref=e14]:
+          - heading "Available Colorways" [level=3] [ref=e16]
+          - generic [ref=e19] [cursor=pointer]:
+            - img "darkgullgray/asphalt/willow" [ref=e20]
+            - paragraph [ref=e21]: darkgullgray/asphalt/willow
+            - paragraph
+        - generic [ref=e22]:
+          - heading "Available Sizes" [level=3] [ref=e24]
+          - generic [ref=e26]:
+            - button "7.5 UK" [ref=e27] [cursor=pointer]
+            - button "8 UK" [ref=e28] [cursor=pointer]
+            - button "8.5 UK" [ref=e29] [cursor=pointer]
+            - button "9 UK" [ref=e30] [cursor=pointer]
+            - button "9.5 UK" [ref=e31] [cursor=pointer]
+            - button "10 UK" [ref=e32] [cursor=pointer]
+            - button "10.5 UK" [ref=e33] [cursor=pointer]
+            - button "11 UK" [ref=e34] [cursor=pointer]
+            - button "11.5 UK" [ref=e35] [cursor=pointer]
+            - button "12.5 UK" [ref=e36] [cursor=pointer]
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e41]:
+            - heading "X ULTRA 5 MID GORE-TEX MEN'S" [level=3] [ref=e42]
+            - paragraph [ref=e43]: Salomon
+            - paragraph [ref=e44]: X
+          - paragraph [ref=e46]: Conquer your ascents and master your descents with confidence. The X Ultra 5 Mid Gore-Tex is a dependable, confidence-boosting hiking ally. Lightweight yet stable, it's as good at charging up hills as it is at tackling descents. Designed to keep you safe and agile on trails, with an ultra-durable Matryx®️ upper, a long lasting Contagrip outsole for grip and a collar area tailored for lasting comfort.
+        - generic [ref=e47]:
+          - heading "Price History" [level=3] [ref=e49]
+          - generic [ref=e52]: No price history available
+        - generic [ref=e53]:
+          - heading "Retailer Prices" [level=3] [ref=e55]
+          - generic [ref=e58] [cursor=pointer]:
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: Salomon Australia
+              - generic [ref=e62]: In Stock
+            - generic [ref=e63]:
+              - generic [ref=e64]: $369.99
+              - button [ref=e65]:
+                - img

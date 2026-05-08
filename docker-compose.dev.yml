@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./sneaker-scout-backend
+      dockerfile: Dockerfile
+    container_name: sneaker-scout-backend
+    env_file:
+      - ./sneaker-scout-backend/.env
+    environment:
+      - SCRAPE_INTERVAL_HOURS=6
+      - CHROMEDRIVER_PATH=/usr/bin/chromedriver
+      - CHROME_BIN=/usr/bin/chromium
+    volumes:
+      - ./sneaker-scout-backend:/app/backend
+      - backend-logs:/app/backend/data_upload/logs
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./aussie-kicks-tracker
+      dockerfile: Dockerfile.dev
+    container_name: sneaker-scout-frontend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./aussie-kicks-tracker/src:/app/src
+      - ./aussie-kicks-tracker/index.html:/app/index.html
+    restart: unless-stopped
+
+volumes:
+  backend-logs:

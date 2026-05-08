@@ -1,0 +1,232 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - region "Notifications (F8)":
+      - list
+    - generic [ref=e3]:
+      - banner [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e7] [cursor=pointer]:
+            - img [ref=e8]
+            - heading "SneakTrack AU" [level=1] [ref=e11]
+          - generic [ref=e12]:
+            - generic [ref=e14]:
+              - img [ref=e15]
+              - searchbox "Search sneakers..." [ref=e18]
+            - button "Sign In" [ref=e19] [cursor=pointer]
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e452]:
+            - generic [ref=e453]:
+              - paragraph [ref=e454]: Total Sneakers
+              - paragraph [ref=e455]: "4"
+            - img [ref=e456]
+          - generic [ref=e462]:
+            - generic [ref=e463]:
+              - paragraph [ref=e464]: In Stock
+              - paragraph [ref=e465]: "3"
+            - img [ref=e466]
+          - generic [ref=e471]:
+            - generic [ref=e472]:
+              - paragraph [ref=e473]: Price Drops
+              - paragraph [ref=e474]: "3"
+            - img [ref=e475]
+        - generic [ref=e477]:
+          - generic [ref=e479]:
+            - generic [ref=e480]:
+              - heading "Filters" [level=3] [ref=e482]:
+                - img [ref=e483]
+                - text: Filters
+              - button "Clear All" [ref=e486] [cursor=pointer]
+            - generic [ref=e487]:
+              - heading "Price Range" [level=3] [ref=e489]:
+                - img [ref=e490]
+                - text: Price Range
+              - generic [ref=e493]:
+                - slider "Minimum" [ref=e498]
+                - generic [ref=e499]:
+                  - generic [ref=e500]: $50
+                  - generic [ref=e501]: $500
+            - generic [ref=e502]:
+              - heading "Stores" [level=3] [ref=e504]
+              - generic [ref=e506]:
+                - checkbox "Salomon Australia" [ref=e507] [cursor=pointer]
+                - generic [ref=e508] [cursor=pointer]: Salomon Australia
+            - generic [ref=e509]:
+              - heading "Brands" [level=3] [ref=e511]
+              - generic [ref=e513]:
+                - checkbox "Salomon" [ref=e514] [cursor=pointer]
+                - generic [ref=e515]: Salomon
+            - generic [ref=e516]:
+              - heading "Sizes" [level=3] [ref=e518]
+              - generic [ref=e520]:
+                - button "US 4" [ref=e521] [cursor=pointer]
+                - button "US 5" [ref=e522] [cursor=pointer]
+                - button "US 6" [ref=e523] [cursor=pointer]
+                - button "US 6.5" [ref=e524] [cursor=pointer]
+                - button "US 7" [ref=e525] [cursor=pointer]
+                - button "US 7.5" [ref=e526] [cursor=pointer]
+                - button "US 8" [ref=e527] [cursor=pointer]
+                - button "US 8.5" [ref=e528] [cursor=pointer]
+                - button "US 9" [ref=e529] [cursor=pointer]
+                - button "US 9.5" [ref=e530] [cursor=pointer]
+                - button "US 10" [ref=e531] [cursor=pointer]
+                - button "US 10.5" [ref=e532] [cursor=pointer]
+                - button "US 11" [ref=e533] [cursor=pointer]
+                - button "US 11.5" [ref=e534] [cursor=pointer]
+                - button "US 12" [ref=e535] [cursor=pointer]
+                - button "US 12.5" [ref=e536] [cursor=pointer]
+                - button "US 13" [ref=e537] [cursor=pointer]
+            - generic [ref=e538]:
+              - heading "Quick Filters" [level=3] [ref=e540]:
+                - img [ref=e541]
+                - text: Quick Filters
+              - generic [ref=e543]:
+                - generic [ref=e544] [cursor=pointer]: On Sale
+                - generic [ref=e545] [cursor=pointer]: New Arrivals
+                - generic [ref=e546] [cursor=pointer]: Price Drops
+                - generic [ref=e547] [cursor=pointer]: Limited Edition
+          - generic [ref=e548]:
+            - generic [ref=e549]:
+              - heading "Price Trends Last 6 months" [level=3] [ref=e551]:
+                - generic [ref=e552]: Price Trends
+                - generic [ref=e553]: Last 6 months
+              - generic [ref=e555]:
+                - generic [ref=e556]:
+                  - heading "Nike Dunk Low" [level=3] [ref=e558]:
+                    - generic [ref=e559]: Nike Dunk Low
+                    - img [ref=e560]
+                  - img [ref=e567]:
+                    - generic [ref=e572]:
+                      - generic [ref=e574]: Jan
+                      - generic [ref=e576]: Feb
+                      - generic [ref=e578]: Mar
+                      - generic [ref=e580]: Apr
+                      - generic [ref=e582]: May
+                      - generic [ref=e584]: Jun
+                    - generic [ref=e586]:
+                      - generic [ref=e588]: "0"
+                      - generic [ref=e590]: "50"
+                      - generic [ref=e592]: "100"
+                      - generic [ref=e594]: "200"
+                - generic [ref=e597]:
+                  - heading "Air Jordan 1" [level=3] [ref=e599]:
+                    - generic [ref=e600]: Air Jordan 1
+                    - img [ref=e601]
+                  - img [ref=e608]:
+                    - generic [ref=e613]:
+                      - generic [ref=e615]: Jan
+                      - generic [ref=e617]: Feb
+                      - generic [ref=e619]: Mar
+                      - generic [ref=e621]: Apr
+                      - generic [ref=e623]: May
+                      - generic [ref=e625]: Jun
+                    - generic [ref=e627]:
+                      - generic [ref=e629]: "0"
+                      - generic [ref=e631]: "85"
+                      - generic [ref=e633]: "170"
+                      - generic [ref=e635]: "340"
+                - generic [ref=e638]:
+                  - heading "Yeezy 350" [level=3] [ref=e640]:
+                    - generic [ref=e641]: Yeezy 350
+                  - img [ref=e646]:
+                    - generic [ref=e651]:
+                      - generic [ref=e653]: Jan
+                      - generic [ref=e655]: Feb
+                      - generic [ref=e657]: Mar
+                      - generic [ref=e659]: Apr
+                      - generic [ref=e661]: May
+                      - generic [ref=e663]: Jun
+                    - generic [ref=e665]:
+                      - generic [ref=e667]: "0"
+                      - generic [ref=e669]: "150"
+                      - generic [ref=e671]: "300"
+                      - generic [ref=e673]: "600"
+            - generic [ref=e676]:
+              - generic [ref=e678]:
+                - heading "Sneaker Listings" [level=3] [ref=e679]
+                - generic [ref=e680]:
+                  - button [ref=e681] [cursor=pointer]:
+                    - img
+                  - button [ref=e682] [cursor=pointer]:
+                    - img
+              - generic [ref=e684]:
+                - tablist [ref=e685]:
+                  - tab "All (4)" [selected] [ref=e686] [cursor=pointer]
+                  - tab "On Sale (3)" [ref=e687] [cursor=pointer]
+                  - tab "New Arrivals" [ref=e688] [cursor=pointer]
+                  - tab "Watched" [ref=e689] [cursor=pointer]
+                - tabpanel "All (4)" [ref=e690]:
+                  - generic [ref=e691]:
+                    - generic [ref=e692] [cursor=pointer]:
+                      - generic [ref=e693]:
+                        - img "AERO GLIDE 4 MEN'S" [ref=e694]
+                        - button [ref=e695]:
+                          - img
+                        - generic [ref=e697]: In Stock
+                      - generic [ref=e698]:
+                        - generic [ref=e700]:
+                          - heading "AERO GLIDE 4 MEN'S" [level=3] [ref=e701]
+                          - paragraph [ref=e702]: Salomon
+                        - generic [ref=e703]:
+                          - generic [ref=e704]: "Colors:"
+                          - generic "silvercloud/silvercloud/white" [ref=e706]
+                        - generic [ref=e708]:
+                          - generic [ref=e709]: $299
+                          - generic [ref=e710]:
+                            - img [ref=e711]
+                            - generic [ref=e714]: $10
+                    - generic [ref=e715] [cursor=pointer]:
+                      - generic [ref=e716]:
+                        - img "SPECTUR 3 MEN'S" [ref=e717]
+                        - button [ref=e718]:
+                          - img
+                        - generic [ref=e720]: In Stock
+                      - generic [ref=e721]:
+                        - generic [ref=e723]:
+                          - heading "SPECTUR 3 MEN'S" [level=3] [ref=e724]
+                          - paragraph [ref=e725]: Salomon
+                        - generic [ref=e726]:
+                          - generic [ref=e727]: "Colors:"
+                          - generic "vanillaice/black/acidlime" [ref=e729]
+                        - generic [ref=e731]:
+                          - generic [ref=e732]: $127
+                          - generic [ref=e733]:
+                            - img [ref=e734]
+                            - generic [ref=e737]: +$9
+                    - generic [ref=e738] [cursor=pointer]:
+                      - generic [ref=e739]:
+                        - img "SPEEDCROSS 6 GORE-TEX EQUIPE" [ref=e740]
+                        - button [ref=e741]:
+                          - img
+                        - generic [ref=e743]: Out of Stock
+                      - generic [ref=e744]:
+                        - generic [ref=e746]:
+                          - heading "SPEEDCROSS 6 GORE-TEX EQUIPE" [level=3] [ref=e747]
+                          - paragraph [ref=e748]: Salomon
+                        - generic [ref=e749]:
+                          - generic [ref=e750]: "Colors:"
+                          - generic "surftheweb/fieryred/white" [ref=e752]
+                        - generic [ref=e754]:
+                          - generic [ref=e755]: $150
+                          - generic [ref=e756]:
+                            - img [ref=e757]
+                            - generic [ref=e760]: $8
+                    - generic [ref=e761] [cursor=pointer]:
+                      - generic [ref=e762]:
+                        - img "X ULTRA 5 MID GORE-TEX MEN'S" [ref=e763]
+                        - button [ref=e764]:
+                          - img
+                        - generic [ref=e766]: In Stock
+                      - generic [ref=e767]:
+                        - generic [ref=e769]:
+                          - heading "X ULTRA 5 MID GORE-TEX MEN'S" [level=3] [ref=e770]
+                          - paragraph [ref=e771]: Salomon
+                        - generic [ref=e772]:
+                          - generic [ref=e773]: "Colors:"
+                          - generic "darkgullgray/asphalt/willow" [ref=e775]
+                        - generic [ref=e777]:
+                          - generic [ref=e778]: $245
+                          - generic [ref=e779]:
+                            - img [ref=e780]
+                            - generic [ref=e783]: $12
+  - generic [ref=e449]: "150"
