@@ -715,6 +715,20 @@ x-scraper-cli:
         One-off hypedc scrape inside the backend container. Required path
         until entrypoint.sh learns about hypedc.
       command: docker-compose run --rm backend python -m backend.hypedc.pagination_scraper
+    - name: platypus-scrape-local
+      description: |
+        Scrape Platypus Shoes, writing `jsons/platypus_products.json`. The
+        listing uses LOAD MORE rather than `?page=N`; `max_pages` in the
+        scraper means "1 + LOAD MORE clicks". If Selenium can't reach the
+        live site, falls back to the static fixtures in `platypus/freesh/`.
+        Set `PLATYPUS_HEADLESS=false` to open a visible browser for manual
+        bot-challenge solving.
+      command: cd sneaker-scout-backend && python -m platypus.pagination_scraper
+    - name: platypus-scrape-docker
+      description: |
+        One-off platypus scrape inside the backend container. Required
+        path until entrypoint.sh learns about platypus.
+      command: docker-compose run --rm backend python -m backend.platypus.pagination_scraper
     - name: supabase-upload-local
       description: |
         Upsert a scraped JSON file into Supabase

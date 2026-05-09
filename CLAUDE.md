@@ -31,7 +31,7 @@ Uses `@` path alias mapped to `./src/`.
 
 ### Backend (`sneaker-scout-backend/`)
 
-The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then `data_upload/run_update.py` upserts that JSON into Supabase. All scraper packages (`salomon/`, `hypedc/`) use **relative intra-package imports** (`from . import …`), so they can be invoked via either:
+The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then `data_upload/run_update.py` upserts that JSON into Supabase. All scraper packages (`salomon/`, `hypedc/`, `platypus/`) use **relative intra-package imports** (`from . import …`), so they can be invoked via either:
 
 - `python -m <retailer>.pagination_scraper` from inside `sneaker-scout-backend/` (local dev), or
 - `python -m backend.<retailer>.pagination_scraper` from anywhere `backend/` is on `PYTHONPATH` (the Docker layout).
@@ -44,10 +44,12 @@ cd sneaker-scout-backend
 # Stage 1 — scrape (produces jsons/<retailer>_products.json)
 python -m salomon.pagination_scraper
 python -m hypedc.pagination_scraper
+python -m platypus.pagination_scraper   # PLATYPUS_HEADLESS=false to solve bot challenges in a visible browser
 
 # Stage 2 — upload (.env must define SUPABASE_URL + SUPABASE_SERVICE_KEY)
 python -m data_upload.run_update --file=jsons/salomon_products.json
 python -m data_upload.run_update --file=jsons/hypedc_products.json
+python -m data_upload.run_update --file=jsons/platypus_products.json
 ```
 
 Each stage is independent — you can re-run upload against an existing JSON without re-scraping.
