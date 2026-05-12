@@ -45,9 +45,7 @@ CREATE TABLE public.colorways (
 CREATE TABLE public.sizes (
   id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at timestamptz DEFAULT now() NOT NULL,
-  us_size    numeric     NOT NULL,
-  uk_size    numeric,
-  eu_size    numeric
+  us_size    numeric     NOT NULL
 );
 
 CREATE TABLE public.prices (

@@ -73,8 +73,6 @@ components:
       properties:
         id: { type: string, format: uuid }
         us_size: { type: number, example: 9.5 }
-        uk_size: { type: number, example: 8.5 }
-        eu_size: { type: number, example: 43 }
 
     Sneaker:
       type: object
@@ -259,7 +257,7 @@ paths:
         file: aussie-kicks-tracker/src/hooks/useSneakers.tsx
         function: useSneaker
       x-curl-example: |
-        curl "$SUPABASE_URL/rest/v1/sneakers?id=eq.<sneakerUuid>&select=id,name,model,release_date,description,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url,sneaker_sizes(size:sizes(us_size,uk_size,eu_size),is_available))" \
+        curl "$SUPABASE_URL/rest/v1/sneakers?id=eq.<sneakerUuid>&select=id,name,model,release_date,description,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url,sneaker_sizes(size:sizes(us_size),is_available))" \
           -H "apikey: $SUPABASE_ANON_KEY" \
           -H "Accept: application/vnd.pgrst.object+json"
 
@@ -431,7 +429,7 @@ paths:
         file: aussie-kicks-tracker/src/lib/sneakerQueries.ts
         function: fetchSizeAvailability
       x-curl-example: |
-        curl "$SUPABASE_URL/rest/v1/sneaker_sizes?colorway_id=eq.<colorwayUuid>&retailer_id=eq.<retailerUuid>&select=id,is_available,size:sizes(id,us_size,uk_size,eu_size)" \
+        curl "$SUPABASE_URL/rest/v1/sneaker_sizes?colorway_id=eq.<colorwayUuid>&retailer_id=eq.<retailerUuid>&select=id,is_available,size:sizes(id,us_size)" \
           -H "apikey: $SUPABASE_ANON_KEY"
       x-size-filter-example: |
         # SneakerDetail uses this to grey out retailers that don't stock the
@@ -677,7 +675,8 @@ paths:
 x-scraper-cli:
   description: |
     The Python backend has no HTTP surface. Scraper packages
-    (`salomon/`, `hypedc/`) use relative intra-package imports, so they
+    (`salomon/`, `hypedc/`, `platypus/`, `footlocker/`) use relative
+    intra-package imports, so they
     can be invoked either as `python -m <retailer>.pagination_scraper`
     from inside `sneaker-scout-backend/` (local dev) or as
     `python -m backend.<retailer>.pagination_scraper` when `backend/` is
@@ -729,6 +728,41 @@ x-scraper-cli:
         One-off platypus scrape inside the backend container. Required
         path until entrypoint.sh learns about platypus.
       command: docker-compose run --rm backend python -m backend.platypus.pagination_scraper
+    - name: footlocker-scrape-local
+      description: |
+        Scrape Foot Locker AU, writing `jsons/footlocker_products.json`.
+        Listing pages are walked via `?currentPage=N` (zero-indexed)
+        starting from the brand page configured in `LISTING_URL` (default:
+        the "On" brand listing). If Selenium can't reach the live site,
+        falls back to the static fixtures in `footlocker/freesh/`. Set
+        `FOOTLOCKER_HEADLESS=false` to open a visible browser for manual
+        Akamai-challenge solving.
+      command: cd sneaker-scout-backend && python -m footlocker.pagination_scraper
+    - name: footlocker-scrape-docker
+      description: |
+        One-off footlocker scrape inside the backend container. Required
+        path until entrypoint.sh learns about footlocker.
+      command: docker-compose run --rm backend python -m backend.footlocker.pagination_scraper
+    - name: jdsports-scrape-local
+      description: |
+        Scrape JD Sports AU, writing `jsons/jdsports_products.json`.
+        Listing pages are walked via `?from=N` (offset, 72 items per
+        page; the All Men's Trainers listing is currently ~20 pages /
+        1413 products). PDP data comes primarily from the JSON-LD
+        Product block; per-size availability is read from
+        `button[data-e2e='pdp-productDetails-size']` `data-stock`
+        attributes. If Selenium can't reach the live site, falls back
+        to the static fixtures in `jdsports/freesh/`. Set
+        `JDSPORTS_HEADLESS=false` to open a visible browser for
+        manual challenge solving (PerimeterX/DataDome). Tunables:
+        `JDSPORTS_MAX_PAGES`, `JDSPORTS_MAX_PER_PAGE`,
+        `JDSPORTS_PACE` (fast/slow), `JDSPORTS_PROFILE_DIR`.
+      command: cd sneaker-scout-backend && python -m jdsports.pagination_scraper
+    - name: jdsports-scrape-docker
+      description: |
+        One-off jdsports scrape inside the backend container. Required
+        path until entrypoint.sh learns about jdsports.
+      command: docker-compose run --rm backend python -m backend.jdsports.pagination_scraper
     - name: supabase-upload-local
       description: |
         Upsert a scraped JSON file into Supabase
