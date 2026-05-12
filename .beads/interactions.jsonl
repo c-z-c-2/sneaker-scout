@@ -48,3 +48,4 @@
 {"id":"int-1515ae50","kind":"field_change","created_at":"2026-05-11T14:49:21.868847072Z","actor":"Chris","issue_id":"sneaker_scout-uvv","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
 {"id":"int-ef8a7410","kind":"field_change","created_at":"2026-05-11T14:50:46.366802031Z","actor":"Chris","issue_id":"sneaker_scout-6gu","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
 {"id":"int-4fe6edbd","kind":"field_change","created_at":"2026-05-11T14:54:16.332814419Z","actor":"Chris","issue_id":"sneaker_scout-xdl","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
+{"id":"int-6a16208d","kind":"field_change","created_at":"2026-05-12T12:27:40.614898324Z","actor":"Chris","issue_id":"sneaker-scout-c1p","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
