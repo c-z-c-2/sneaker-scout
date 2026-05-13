@@ -103,6 +103,8 @@ components:
         original_price: { type: number, format: float, nullable: true }
         is_available: { type: boolean }
         product_url: { type: string, nullable: true, description: "Per-product URL on the retailer site, used by the 'view at retailer' link." }
+        is_on_sale: { type: boolean, description: "True when this retailer's price < original_price (the retailer marked it down). Computed at ingest by data_upload.bulk_upload. Backfilled in migration 20260513120000-7bl. See sneaker_scout-7bl." }
+        is_lowest_ever: { type: boolean, description: "True when this row's price is at or below the historical cross-retailer minimum recorded for this colorway (union of public.prices and public.price_history). Sticky: not unset on competitor rows when another retailer drops lower; each row's flag is refreshed on its own retailer's next scrape. See sneaker_scout-7bl." }
 
     SneakerSize:
       type: object
