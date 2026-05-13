@@ -17,7 +17,7 @@ CREATE TABLE public.brands (
 CREATE TABLE public.retailers (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at  timestamptz DEFAULT now() NOT NULL,
-  name        text        NOT NULL,
+  name        text        NOT NULL UNIQUE,
   logo_url    text,
   website_url text
 );
@@ -30,7 +30,9 @@ CREATE TABLE public.sneakers (
   name         text        NOT NULL,
   model        text        NOT NULL,
   description  text,
-  release_date date
+  release_date date,
+  lookup_key   text        NOT NULL DEFAULT '',
+  UNIQUE (brand_id, lookup_key)
 );
 
 CREATE TABLE public.colorways (
@@ -39,13 +41,15 @@ CREATE TABLE public.colorways (
   sneaker_id uuid        NOT NULL REFERENCES public.sneakers(id),
   name       text        NOT NULL,
   color_code text,
-  image_url  text
+  image_url  text,
+  lookup_key text        NOT NULL DEFAULT '',
+  UNIQUE (sneaker_id, lookup_key)
 );
 
 CREATE TABLE public.sizes (
   id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at timestamptz DEFAULT now() NOT NULL,
-  us_size    numeric     NOT NULL
+  us_size    numeric     NOT NULL UNIQUE
 );
 
 CREATE TABLE public.prices (
@@ -58,7 +62,8 @@ CREATE TABLE public.prices (
   original_price numeric,
   currency       text,
   is_available   boolean,
-  product_url    text
+  product_url    text,
+  UNIQUE (colorway_id, retailer_id)
 );
 
 -- Append-only; a row is inserted whenever update_supabase_daily.py detects a price change
@@ -78,7 +83,8 @@ CREATE TABLE public.sneaker_sizes (
   colorway_id  uuid        NOT NULL REFERENCES public.colorways(id),
   size_id      uuid        NOT NULL REFERENCES public.sizes(id),
   retailer_id  uuid        NOT NULL REFERENCES public.retailers(id),
-  is_available boolean
+  is_available boolean,
+  UNIQUE (colorway_id, size_id, retailer_id)
 );
 
 CREATE TABLE public.profiles (

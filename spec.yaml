@@ -766,14 +766,26 @@ x-scraper-cli:
     - name: supabase-upload-local
       description: |
         Upsert a scraped JSON file into Supabase
-        (brands → sneakers → colorways → retailers → prices → sizes →
+        (retailer → brands → sizes → sneakers → colorways → prices →
         sneaker_sizes; appends `price_history` rows when a price changed).
+        Default path is the bulk-upsert uploader from
+        data_upload/bulk_upload.py — one upsert per table, ~7-10 HTTPS
+        round trips per JSON file regardless of product count. Pass
+        --per-row to fall back to the legacy update_supabase_daily.main
+        loop (slower; preserves first-write-wins-on-name semantic).
         Replace the --file arg with whichever JSON you want to upload.
       command: cd sneaker-scout-backend && python -m data_upload.run_update --file=jsons/hypedc_products.json
+    - name: supabase-upload-local-legacy
+      description: |
+        Same upload step but routed through the per-row uploader. Use
+        when bisecting a bulk-path regression or when first-write-wins
+        display-name semantics matter.
+      command: cd sneaker-scout-backend && python -m data_upload.run_update --file=jsons/hypedc_products.json --per-row
     - name: supabase-upload-docker
       description: |
         Same upload step inside the container. Note the in-container path
-        prefix `backend/jsons/...`.
+        prefix `backend/jsons/...`. Default path is bulk-upsert; pass
+        --per-row to fall back to update_supabase_daily.main.
       command: docker-compose run --rm backend python -m backend.data_upload.run_update --file=backend/jsons/hypedc_products.json
     - name: tests
       description: 'Run the backend test suite (pytest).'
