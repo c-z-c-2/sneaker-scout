@@ -31,7 +31,7 @@ Uses `@` path alias mapped to `./src/`.
 
 ### Backend (`sneaker-scout-backend/`)
 
-The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then `data_upload/run_update.py` upserts that JSON into Supabase. All scraper packages (`salomon/`, `hypedc/`, `platypus/`) use **relative intra-package imports** (`from . import …`), so they can be invoked via either:
+The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then `data_upload/run_update.py` upserts that JSON into Supabase. All scraper packages (`salomon/`, `hypedc/`, `platypus/`, `footlocker/`, `jdsports/`) use **relative intra-package imports** (`from . import …`), so they can be invoked via either:
 
 - `python -m <retailer>.pagination_scraper` from inside `sneaker-scout-backend/` (local dev), or
 - `python -m backend.<retailer>.pagination_scraper` from anywhere `backend/` is on `PYTHONPATH` (the Docker layout).
@@ -44,12 +44,16 @@ cd sneaker-scout-backend
 # Stage 1 — scrape (produces jsons/<retailer>_products.json)
 python -m salomon.pagination_scraper
 python -m hypedc.pagination_scraper
-python -m platypus.pagination_scraper   # PLATYPUS_HEADLESS=false to solve bot challenges in a visible browser
+python -m platypus.pagination_scraper     # PLATYPUS_HEADLESS=false to solve bot challenges in a visible browser
+python -m footlocker.pagination_scraper   # FOOTLOCKER_HEADLESS=false if Akamai puts up a challenge
+python -m jdsports.pagination_scraper     # JDSPORTS_HEADLESS=false if PerimeterX/DataDome challenges
 
 # Stage 2 — upload (.env must define SUPABASE_URL + SUPABASE_SERVICE_KEY)
 python -m data_upload.run_update --file=jsons/salomon_products.json
 python -m data_upload.run_update --file=jsons/hypedc_products.json
 python -m data_upload.run_update --file=jsons/platypus_products.json
+python -m data_upload.run_update --file=jsons/footlocker_products.json
+python -m data_upload.run_update --file=jsons/jdsports_products.json
 ```
 
 Each stage is independent — you can re-run upload against an existing JSON without re-scraping.
@@ -190,6 +194,30 @@ Do **NOT** run `bd dolt start` — it starts from the wrong directory.
 - **Don't run `bd bootstrap`** if the server is already up — fails with "nothing to commit" (harmless but confusing)
 - **Don't delete `/tmp/beads-dolt/`** — bd uses it for managed server config and lock files
 - **Don't trust `bd dolt status` Data: line** — shows `/tmp/beads-dolt` even when real data is elsewhere
+
+---
+
+## Superpowers — required workflow
+
+Two superpowers skills are **mandatory** on this project, not optional:
+
+- **`superpowers:writing-plans`** — Always invoke before writing implementation code for any non-trivial task (anything more than a one-line fix). The plan is the alignment artifact between you and the user; skipping it produces work that drifts from intent. Plans live under `docs/superpowers/plans/`.
+- **`superpowers:subagent-driven-development`** — Always use this mode to *execute* a written plan. Step-by-step subagent dispatch keeps each implementation slice isolated, testable, and reviewable. Do NOT execute multi-task plans inline in the main session — spawn subagents per task as the skill prescribes.
+
+Sequence: brainstorming (when scoping is open) → writing-plans (always before code) → subagent-driven-development (always for execution). Skipping either step requires an explicit user override.
+
+## Context Management
+
+**Clear context when you cross ~300k tokens.** Long sessions on this repo accumulate scraper logs, JSON dumps, and full test suites — once context climbs past ~300k the model starts losing fidelity on details from earlier turns, and cache misses get expensive.
+
+When you cross the threshold (or sense degradation — repeated questions, forgetting prior decisions, summaries diverging from actual code):
+
+1. Finish the in-flight beads issue: run quality gates, `bd close`, commit per the Per-Issue Commit Protocol below.
+2. Run `bd remember "<insight>"` for anything from this session that future sessions need (decisions, gotchas, non-obvious findings — NOT the work itself, which is in commits).
+3. Tell the user you're hitting the context budget and recommend `/clear`. Hand off with a 3-line summary: what just shipped, what's next, where to resume from (`bd ready` is usually enough).
+4. Do NOT continue spawning new work in the same context after the threshold — close out cleanly first.
+
+The goal is to never lose work to context decay. Commits + bd issues + `bd remember` are the durable handoff; the conversation transcript is not.
 
 ---
 
