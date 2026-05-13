@@ -63,6 +63,8 @@ CREATE TABLE public.prices (
   currency       text,
   is_available   boolean,
   product_url    text,
+  is_on_sale     boolean     NOT NULL DEFAULT false,
+  is_lowest_ever boolean     NOT NULL DEFAULT false,
   UNIQUE (colorway_id, retailer_id)
 );
 
