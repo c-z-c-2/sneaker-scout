@@ -353,6 +353,16 @@ paths:
       x-curl-example: |
         curl "$SUPABASE_URL/rest/v1/colorways?sneaker_id=eq.<sneakerUuid>&select=id,name,color_code,image_url" \
           -H "apikey: $SUPABASE_ANON_KEY"
+      x-sale-query-example: |
+        # fetchSaleColorways (src/lib/sneakerQueries.ts), signal=all,
+        # no filters. The `or=` is applied on the prices foreign table.
+        curl "$SUPABASE_URL/rest/v1/colorways?select=id,name,image_url,sneakers!inner(id,name,brand:brands(id,name)),prices!inner(price,original_price,is_on_sale,is_lowest_ever,last_updated,retailer:retailers(id,name))&prices.or=(is_on_sale.eq.true,is_lowest_ever.eq.true)" \
+          -H "apikey: $SUPABASE_ANON_KEY"
+      x-sale-count-example: |
+        # fetchSaleColorwaysCount — drives the Index '🔥 Deals' tile.
+        curl -I "$SUPABASE_URL/rest/v1/colorways?select=id,prices!inner(is_on_sale,is_lowest_ever)&prices.or=(is_on_sale.eq.true,is_lowest_ever.eq.true)" \
+          -H "apikey: $SUPABASE_ANON_KEY" \
+          -H "Prefer: count=exact"
 
   # ===================================================================
   # Pricing surfaces
