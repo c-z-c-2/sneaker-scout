@@ -92,6 +92,14 @@ components:
         name: { type: string, example: "Black/Phantom" }
         color_code: { type: string, nullable: true, example: "Black/Phantom" }
         image_url: { type: string, nullable: true }
+        gender:
+          type: string
+          enum: [mens, womens, unisex, kids]
+          description: |
+            Demographic the colorway is marketed to. Backfilled `mens` by
+            migration 20260517120000-v7h; every retailer scraper since
+            then emits the gender per colorway based on which listing URL
+            the row was scraped from. See sneaker_scout-v7h.
 
     Price:
       type: object
@@ -363,6 +371,11 @@ paths:
         curl -I "$SUPABASE_URL/rest/v1/colorways?select=id,prices!inner(is_on_sale,is_lowest_ever)&prices.or=(is_on_sale.eq.true,is_lowest_ever.eq.true)" \
           -H "apikey: $SUPABASE_ANON_KEY" \
           -H "Prefer: count=exact"
+      x-gender-filter-example: |
+        # Restrict to womens colorways only — used by the `?gender=womens`
+        # URL state on the `/` and `/sale` pages.
+        curl "$SUPABASE_URL/rest/v1/colorways?gender=eq.womens&select=id,name,gender" \
+          -H "apikey: $SUPABASE_ANON_KEY"
 
   # ===================================================================
   # Pricing surfaces
@@ -775,6 +788,24 @@ x-scraper-cli:
         One-off jdsports scrape inside the backend container. Required
         path until entrypoint.sh learns about jdsports.
       command: docker-compose run --rm backend python -m backend.jdsports.pagination_scraper
+    - name: gender-flag-usage
+      description: |
+        Per-retailer invocation, one process per gender. Each writes a
+        per-gender JSON. Default is --gender=mens. Same flag on
+        hypedc/platypus/footlocker/jdsports.
+
+          python -m salomon.pagination_scraper --gender=mens
+          python -m salomon.pagination_scraper --gender=womens
+            -> jsons/salomon_mens_products.json, jsons/salomon_womens_products.json
+
+        Upload each JSON via:
+          python -m data_upload.run_update --file=jsons/<retailer>_<gender>_products.json
+
+        Backfill note: migration 20260517120000-v7h sets gender='mens' on
+        all pre-existing colorways. Scrapers since then emit the correct
+        gender based on which listing URL the row was scraped from.
+        See sneaker_scout-v7h.
+      command: cd sneaker-scout-backend && python -m salomon.pagination_scraper --gender=mens
     - name: supabase-upload-local
       description: |
         Upsert a scraped JSON file into Supabase

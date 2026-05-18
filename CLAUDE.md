@@ -41,19 +41,16 @@ The pipeline is two stages: a per-retailer scraper writes JSON to `jsons/`, then
 ```bash
 cd sneaker-scout-backend
 
-# Stage 1 — scrape (produces jsons/<retailer>_products.json)
-python -m salomon.pagination_scraper
-python -m hypedc.pagination_scraper
-python -m platypus.pagination_scraper     # PLATYPUS_HEADLESS=false to solve bot challenges in a visible browser
-python -m footlocker.pagination_scraper   # FOOTLOCKER_HEADLESS=false if Akamai puts up a challenge
-python -m jdsports.pagination_scraper     # JDSPORTS_HEADLESS=false if PerimeterX/DataDome challenges
+# Stage 1 — scrape (produces jsons/<retailer>_<gender>_products.json)
+python -m salomon.pagination_scraper --gender=mens
+python -m salomon.pagination_scraper --gender=womens
+python -m hypedc.pagination_scraper --gender=mens   # repeat with --gender=womens
+# ... etc for platypus, footlocker, jdsports ...
 
 # Stage 2 — upload (.env must define SUPABASE_URL + SUPABASE_SERVICE_KEY)
-python -m data_upload.run_update --file=jsons/salomon_products.json
-python -m data_upload.run_update --file=jsons/hypedc_products.json
-python -m data_upload.run_update --file=jsons/platypus_products.json
-python -m data_upload.run_update --file=jsons/footlocker_products.json
-python -m data_upload.run_update --file=jsons/jdsports_products.json
+python -m data_upload.run_update --file=jsons/salomon_mens_products.json
+python -m data_upload.run_update --file=jsons/salomon_womens_products.json
+# ... repeat per retailer/gender
 ```
 
 Each stage is independent — you can re-run upload against an existing JSON without re-scraping.
