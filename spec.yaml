@@ -113,6 +113,7 @@ components:
         product_url: { type: string, nullable: true, description: "Per-product URL on the retailer site, used by the 'view at retailer' link." }
         is_on_sale: { type: boolean, description: "True when this retailer's price < original_price (the retailer marked it down). Computed at ingest by data_upload.bulk_upload. Backfilled in migration 20260513120000-7bl. See sneaker_scout-7bl." }
         is_lowest_ever: { type: boolean, description: "True when this row's price is at or below the historical cross-retailer minimum recorded for this colorway (union of public.prices and public.price_history). Sticky: not unset on competitor rows when another retailer drops lower; each row's flag is refreshed on its own retailer's next scrape. See sneaker_scout-7bl." }
+        listing_rank: { type: integer, nullable: true, description: "Position this colorway occupied in the retailer's listing page on the last scrape (1 = first). NULL when not captured. Refreshed wholesale per (retailer, gender) on every scrape run. Only the Hype DC scraper populates this today; useSneakers consumes it for the all-view sort. See sneaker_scout-j26." }
 
     SneakerSize:
       type: object
@@ -199,22 +200,22 @@ paths:
     get:
       summary: List sneakers
       description: |
-        Paginated listing. The frontend embeds `brands` and `colorways`, and
-        when filters are active uses inner joins on `prices` or
-        `sneaker_sizes` so the count reflects the filtered set.
+        Paginated listing. The frontend embeds `brands` and `colorways`,
+        always embeds `prices(retailer_id, listing_rank)` on each colorway
+        (needed by the client-side Hype-DC-mirror sort — see
+        `sneaker_scout-j26`), and when filters are active uses inner joins
+        on `prices` or `sneaker_sizes` so the row set is the filtered set.
+
+        Since `j26`, the listing is fetched in full (no server-side `order`
+        or `range`) and the client sorts + paginates after running
+        `interleaveStriped` over the rows. The PostgREST response carries
+        every matching sneaker; the hook slices into pages in JS.
       parameters:
         - $ref: '#/components/parameters/Select'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/PreferCount'
       responses:
         '200':
-          description: Array of sneakers
-          headers:
-            Content-Range:
-              description: 'Range/total when Prefer:count=exact set, e.g. `0-19/137`.'
-              schema: { type: string }
+          description: Array of sneakers (full filtered set, client paginates)
           content:
             application/json:
               schema:
@@ -225,24 +226,31 @@ paths:
         function: useSneakers
         notes: |
           Calls supabase.from('sneakers').select(..., { count: 'exact' })
-          .order('name').range(offset, offset + limit - 1).
+          with NO .order() and NO .range(). Embeds prices(retailer_id,
+          listing_rank) on every colorway. The hook then computes a
+          per-sneaker Hype rank, runs interleaveStriped, and slices by
+          page client-side.
       x-curl-example: |
-        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,model,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url)&order=name&offset=0&limit=20" \
+        # Unfiltered: fetch every sneaker with embedded colorways + Hype rank
+        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,model,brand:brands(id,name,logo_url),colorways(id,name,color_code,image_url,gender,prices(retailer_id,listing_rank))" \
           -H "apikey: $SUPABASE_ANON_KEY" \
           -H "Prefer: count=exact"
       x-supabase-js-example: |
-        const { data, count, error } = await supabase
+        const { data, error } = await supabase
           .from('sneakers')
           .select(
-            'id, name, model, brand:brands(id, name, logo_url), colorways(id, name, color_code, image_url)',
+            'id, name, model, brand:brands(id, name, logo_url), ' +
+            'colorways(id, name, color_code, image_url, gender, ' +
+            '  prices(retailer_id, listing_rank))',
             { count: 'exact' }
-          )
-          .order('name')
-          .range(0, 19);
+          );
+        // No .order() / .range() — client-side sort+paginate via
+        // interleaveStriped in src/lib/rankInterleave.ts.
       x-filtered-example: |
         # Listing scoped to retailers + sizes (matches useSneakers when both
-        # filters are active) — inner-joins through sneaker_sizes:
-        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,colorways!inner(id,name,sneaker_sizes!inner(retailer_id,is_available,sizes!inner(us_size)))&colorways.sneaker_sizes.sizes.us_size=in.(9,9.5,10)&colorways.sneaker_sizes.is_available=eq.true&colorways.sneaker_sizes.retailer_id=in.(<retailerUuid1>,<retailerUuid2>)&order=name&limit=20" \
+        # filters are active) — inner-joins through sneaker_sizes; prices
+        # embed widens to include listing_rank for the Hype-mirror sort:
+        curl "$SUPABASE_URL/rest/v1/sneakers?select=id,name,colorways!inner(id,name,gender,sneaker_sizes!inner(retailer_id,is_available,sizes!inner(us_size)),prices(retailer_id,listing_rank))&colorways.sneaker_sizes.sizes.us_size=in.(9,9.5,10)&colorways.sneaker_sizes.is_available=eq.true&colorways.sneaker_sizes.retailer_id=in.(<retailerUuid1>,<retailerUuid2>)" \
           -H "apikey: $SUPABASE_ANON_KEY" \
           -H "Prefer: count=exact"
 
