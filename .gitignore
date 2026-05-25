@@ -5,3 +5,22 @@
 
 # bv (beads viewer) local config and caches
 .bv/
+
+.venv/
+
+# Sub-project repos (tracked separately)
+sneaker-scout-backend/
+aussie-kicks-tracker/
+
+# Scratch / session files
+notes.md
+scripts.txt
+retailer_sizes_test.log
+todo.txt
+*.png
+*.log
+image.png
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
