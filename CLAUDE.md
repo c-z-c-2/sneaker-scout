@@ -73,7 +73,7 @@ docker-compose run --rm backend python -m backend.data_upload.run_update \
 
 Inside the container `PYTHONPATH=/app` and the package is mounted at `/app/backend/`, so in-container runs must use the `backend.<retailer>.…` form.
 
-Requires a `.env` file in `sneaker-scout-backend/` (copy from `.env.example`) with `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`. Optional: `CHROMEDRIVER_PATH` to override the Chrome/Selenium binary.
+Requires a `.env` file in `sneaker-scout-backend/` (copy from `.env.example`) with `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`. Optional env vars: `CHROMEDRIVER_PATH` to override the chromedriver binary path; `<RETAILER>_CHROME_VERSION=<major>` (e.g. `HYPEDC_CHROME_VERSION=148`) to override the auto-detected Chrome major version; `CHROME_BIN` to point directly at the Chrome binary (consulted first in Docker).
 
 Python dependencies: `selenium`, `webdriver-manager`, `beautifulsoup4`, `supabase`, `python-dotenv`, `pandas`, `pydantic>=2.0`.
 

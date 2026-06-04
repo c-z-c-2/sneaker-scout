@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Install uv (fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Install system dependencies: Chromium, Node.js, and dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
@@ -42,11 +45,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
+# undetected_chromedriver patches the binary in-place — needs write access for non-root users
+RUN chmod a+rw /usr/bin/chromedriver
+
 WORKDIR /workspace
 
-# Install Python dependencies
-COPY sneaker-scout-backend/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# Python deps are installed via `uv sync` in postCreateCommand after the workspace is mounted.
+# This keeps the image lean and means dep changes don't require a full image rebuild.
 
 # Install Node dependencies (will be overwritten by mount, but cached in image for speed)
 COPY aussie-kicks-tracker/package.json aussie-kicks-tracker/package-lock.json /tmp/frontend/
