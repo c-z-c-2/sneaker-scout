@@ -24,3 +24,13 @@ image.png
 # Claude Code local settings (machine-specific)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Claude Code plugin cache — installed into the dev container by postCreateCommand
+# (lands here because the container bind-mounts project .claude as ~/.claude).
+# Machine/container-specific absolute paths; regenerated on container create.
+.claude/plugins/
+# devcontainer secrets (beads dolt password) - never commit
+.devcontainer/devcontainer.env
+
+# beads data backup tarballs (migration snapshots)
+beads-embeddeddolt-backup-*.tgz

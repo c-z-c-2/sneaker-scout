@@ -1,83 +1,35 @@
-# Beads Dolt Setup — Troubleshooting Notes
+# Beads Dolt Setup
 
-## What went wrong and how it was fixed
+**Current setup: external server mode.** A single `dolt sql-server` runs on the
+macOS **host** under a launchd agent (`com.beads.dolt.sneaker-scout`), bound to
+`0.0.0.0:3307`, serving the database from `~/Projects/sneaker-scout/.beads/dolt/`.
+Both the host and the dev container connect as pure MySQL clients via
+`BEADS_DOLT_*` env vars. `root@'%'` requires a password.
 
-### The core problem
+➡️ **The authoritative docs live in the repo-root `CLAUDE.md` →
+"Beads Dolt Setup (external server mode)"** (architecture diagram, the env-var
+table, and the launchd management commands). Start there.
 
-`bd dolt start` always starts its managed dolt server from `/tmp/beads-dolt/` as the data directory.
-The actual beads database (`sneaker_scout`) lives at `/workspace/.beads/embeddeddolt/sneaker_scout/`.
-These two directories are completely separate — the server in `/tmp/beads-dolt` has no databases.
-
-### Why `bd list` kept failing
-
-Every `bd list` command hit this sequence:
-1. bd checks for a running dolt server (reads `.beads/dolt-server.pid`)
-2. bd auto-starts the server via `bd dolt start` if not running
-3. `bd dolt start` launches dolt with data_dir = `/tmp/beads-dolt`
-4. That directory has no `sneaker_scout` database → `database not found` error
-
-### What made things worse
-
-- `dolt-server.pid` and `dolt-server.port` were owned by root (created when dolt was previously run as root)
-- Deleting those files caused the port to change on each restart
-- `bd bootstrap` kept saying "nothing to commit" — this is because the tables were already created in the embedded dolt, but the running server was pointing at the wrong directory (so bd tried to re-create them in the wrong place and got confused)
-
-### The fix
-
-**Step 1:** Start the dolt server MANUALLY from the directory that contains the actual database:
+Quick reference:
 
 ```bash
-cd /workspace/.beads/embeddeddolt
-dolt sql-server --host=127.0.0.1 --port=7878 > /tmp/dolt-manual.log 2>&1 &
-sleep 5
+# host server status / restart (launchd owns it, KeepAlive restarts on crash+reboot)
+launchctl print gui/$(id -u)/com.beads.dolt.sneaker-scout | grep -E 'state|pid'
+launchctl kickstart -k gui/$(id -u)/com.beads.dolt.sneaker-scout
+lsof -nP -iTCP:3307 -sTCP:LISTEN     # expect *:3307
+bd dolt show                          # connection test
 ```
 
-This works because `/workspace/.beads/embeddeddolt/` is the correct data_dir. The `sneaker_scout` subdirectory is a valid dolt repo (has `.dolt/` inside it) and is served as the `sneaker_scout` database.
+---
 
-**Step 2:** Pin the port in beads config so bd connects to the right server:
+## Historical: the old embedded-mode problem (pre-migration)
 
-```bash
-bd config set dolt.port 7878
-```
-
-This writes `dolt.port: 7878` to `.beads/config.yaml` and stops bd from auto-starting its own server on a random port.
-
-**Step 3 (optional):** Also edit `/tmp/beads-dolt/config.yaml` and set:
-```yaml
-data_dir: /workspace/.beads/embeddeddolt
-```
-This makes it so if bd's managed server IS started, it points at the right place. (This alone wasn't enough — the server still didn't pick up the database, possibly a dolt multi-db config issue.)
-
-### Database structure
-
-```
-/workspace/.beads/
-├── embeddeddolt/          ← data_dir for dolt sql-server
-│   ├── .dolt/             ← dolt metadata for the parent repo
-│   ├── .doltcfg/
-│   ├── config.yaml        ← optional: copy of server config
-│   └── sneaker_scout/     ← the actual beads database (a dolt repo)
-│       └── .dolt/         ← MUST exist for server to recognize as a database
-└── config.yaml            ← bd config; has dolt.port: 7878
-```
-
-### Restoring beads after a session restart
-
-If the dolt server is not running (e.g. after container restart), run:
-
-```bash
-cd /workspace/.beads/embeddeddolt
-dolt sql-server --host=127.0.0.1 --port=7878 > /tmp/dolt-manual.log 2>&1 &
-sleep 5
-bd list   # verify it works
-```
-
-Do NOT run `bd dolt start` — it starts from the wrong directory.
-
-### What NOT to do
-
-- **Don't run `bd dolt start`** — it starts from `/tmp/beads-dolt` and can't find `sneaker_scout`
-- **Don't run `bd bootstrap`** if the server is already up and working — it will fail with "nothing to commit" (harmless but confusing)
-- **Don't delete `/tmp/beads-dolt/`** — bd uses it for its managed server config and lock files
-- **Don't run `bd init --force`** without first confirming dolt is pointing at the right directory; it will reinit the schema but still can't commit if the server is wrong
-- **Don't trust `bd dolt status` Data: line** — it shows `/tmp/beads-dolt` even when the real data is elsewhere
+Before the migration to server mode, beads ran in **embedded mode** with the
+data at `.beads/embeddeddolt/sneaker_scout/`, and `bd dolt start` would launch a
+managed server from `/tmp/beads-dolt/` (a different, empty data dir) — so
+`bd list` failed with "database not found". The workaround was to start
+`dolt sql-server` manually from `.beads/embeddeddolt`. The migration replaced all
+of that: `embeddeddolt/` was renamed to `dolt/`, a host launchd server now owns
+the process on port 3307, and the container connects over `host.docker.internal`.
+This section is kept only so old references to the `/tmp/beads-dolt` failure mode
+make sense; **do not follow the old steps.**

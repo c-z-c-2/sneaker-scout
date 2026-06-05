@@ -155,42 +155,66 @@ bd close <id>         # Complete work
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
-## Beads Dolt Setup
+## Beads Dolt Setup (external server mode)
 
-### The core problem
+### Architecture
 
-`bd dolt start` always starts its managed dolt server from `/tmp/beads-dolt/` as the data directory. The actual beads database (`sneaker_scout`) lives at `/workspace/.beads/embeddeddolt/sneaker_scout/`. These two directories are separate — the server in `/tmp/beads-dolt` has no databases, so `bd list` fails with "database not found".
+Beads runs in **external server mode**. One `dolt sql-server` runs **on the macOS
+host**, owned by a launchd agent, bound to `0.0.0.0:3307`. Both the host and the
+dev container connect to it as **pure MySQL clients** — neither starts its own
+server. Connection details come from `BEADS_DOLT_*` env vars (per-environment),
+which override `.beads/config.yaml`.
 
-### Restoring beads after a session restart
+```
+macOS host
+├── launchd agent  com.beads.dolt.sneaker-scout   → dolt sql-server 0.0.0.0:3307
+│     plist:  ~/Library/LaunchAgents/com.beads.dolt.sneaker-scout.plist
+│     data:   ~/Projects/sneaker-scout/.beads/dolt/   (dir contains the
+│             sneaker_scout database; auth in .doltcfg/privileges.db)
+├── host bd  → 127.0.0.1:3307            (env in ~/.zshrc)
+└── dev container bd → host.docker.internal:3307   (env in devcontainer.json)
+```
 
-If the dolt server is not running (e.g. after container restart), run:
+Auth: `root@'%'` requires a password (`BEADS_DOLT_PASSWORD`). The password lives
+in `~/.zshrc` on the host and in the **gitignored** `.devcontainer/devcontainer.env`
+for the container — never committed.
+
+### Connection env vars
+
+| var | host (`~/.zshrc`) | container (`devcontainer.json`) |
+|-----|-------------------|----------------------------------|
+| `BEADS_DOLT_SERVER_MODE` | `1` | `1` |
+| `BEADS_DOLT_SERVER_HOST` | `127.0.0.1` | `host.docker.internal` |
+| `BEADS_DOLT_SERVER_PORT` | `3307` | `3307` |
+| `BEADS_DOLT_SERVER_DATABASE` | `sneaker_scout` | `sneaker_scout` |
+| `BEADS_DOLT_AUTO_START` | `0` | `0` |
+| `BEADS_DOLT_PASSWORD` | (in `.zshrc`) | (from `devcontainer.env`) |
+
+### Managing the host server
 
 ```bash
-cd /workspace/.beads/embeddeddolt
-dolt sql-server --host=127.0.0.1 --port=7878 > /tmp/dolt-manual.log 2>&1 &
-sleep 5
-bd list   # verify it works
-```
+# status / restart / stop (launchd owns it; KeepAlive restarts on crash + reboot)
+launchctl print  gui/$(id -u)/com.beads.dolt.sneaker-scout | grep -E 'state|pid'
+launchctl kickstart -k gui/$(id -u)/com.beads.dolt.sneaker-scout   # restart
+launchctl bootout   gui/$(id -u)/com.beads.dolt.sneaker-scout      # stop+unload
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.beads.dolt.sneaker-scout.plist  # load
 
-Do **NOT** run `bd dolt start` — it starts from the wrong directory.
-
-### Database structure
-
-```
-/workspace/.beads/
-├── embeddeddolt/          ← correct data_dir for dolt sql-server
-│   ├── .dolt/
-│   └── sneaker_scout/     ← the actual beads database (a dolt repo)
-│       └── .dolt/         ← must exist for server to recognise it
-└── config.yaml            ← has dolt.port: 7878 (pinned)
+lsof -nP -iTCP:3307 -sTCP:LISTEN   # confirm it's listening (expect *:3307)
+bd dolt show                       # bd's view + connection test
 ```
 
 ### What NOT to do
 
-- **Don't run `bd dolt start`** — starts from `/tmp/beads-dolt`, can't find `sneaker_scout`
-- **Don't run `bd bootstrap`** if the server is already up — fails with "nothing to commit" (harmless but confusing)
-- **Don't delete `/tmp/beads-dolt/`** — bd uses it for managed server config and lock files
-- **Don't trust `bd dolt status` Data: line** — shows `/tmp/beads-dolt` even when real data is elsewhere
+- **Don't run `bd dolt start` / `bd init` inside the container.** The container is
+  a pure client; starting a server there spawns a competing instance or a stray
+  database. `BEADS_DOLT_AUTO_START=0` already disables auto-start.
+- **Don't commit `BEADS_DOLT_PASSWORD` or `.devcontainer/devcontainer.env`** — both
+  are gitignored. The password is also in `~/.zshrc` (host-only, not in git).
+- **Don't put `host`/`mode`/`password` in `.beads/config.yaml`** — that file is
+  shared, but the host differs per environment (`127.0.0.1` vs
+  `host.docker.internal`). Only the env-invariant `dolt.port: 3307` lives there.
+- **Don't delete `.beads/dolt/`** — that's the live database (a Dolt repo). A
+  tarball backup was taken at migration time (`beads-embeddeddolt-backup-*.tgz`).
 
 ---
 

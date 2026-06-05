@@ -53,4 +53,7 @@
 # - github.org
 # - github.repo
 
-dolt.port: 7878
+# External dolt sql-server (host launchd agent) listens on 3307.
+# Host/mode/password are set per-environment via BEADS_DOLT_* env vars
+# (host: .zshrc -> 127.0.0.1; container: devcontainer.json -> host.docker.internal).
+dolt.port: 3307
