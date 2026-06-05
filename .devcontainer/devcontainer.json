@@ -6,9 +6,12 @@
   },
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "mounts": [
+    "source=${localWorkspaceFolder}/.claude,target=/home/chris/.claude,type=bind,consistency=cached"
+  ],
   "remoteUser": "chris",
   "containerUser": "chris",
-  "postCreateCommand": "git config --global --add safe.directory /workspace && git config --global --add safe.directory /workspace/aussie-kicks-tracker && git config --global --add safe.directory /workspace/sneaker-scout-backend && chmod 700 /workspace/.beads 2>/dev/null; curl -fsSL https://claude.ai/install.sh | bash && curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash && curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh | bash && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> /home/chris/.bashrc && cd /workspace/aussie-kicks-tracker && npm ci",
+  "postCreateCommand": "git config --global --add safe.directory /workspace && git config --global --add safe.directory /workspace/aussie-kicks-tracker && git config --global --add safe.directory /workspace/sneaker-scout-backend && chmod 700 /workspace/.beads 2>/dev/null; curl -fsSL https://claude.ai/install.sh | bash && curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash && curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh | bash && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> /home/chris/.bashrc && export PATH=\"$HOME/.local/bin:$PATH\" && (claude plugin marketplace add anthropics/claude-plugins-official 2>/dev/null || true) && (claude plugin install superpowers@claude-plugins-official 2>/dev/null || true) && cd /workspace/sneaker-scout-backend && uv sync && echo 'source /workspace/sneaker-scout-backend/.venv/bin/activate' >> /home/chris/.bashrc && echo 'source /workspace/sneaker-scout-backend/.venv/bin/activate' >> /home/chris/.zshrc && cd /workspace/aussie-kicks-tracker && npm ci",
   "postStartCommand": "bd dolt start 2>/dev/null || true",
   "forwardPorts": [8080],
   "customizations": {
