@@ -808,8 +808,10 @@ x-scraper-cli:
         `--gender` (default mens), `--out`, `--limit`, `--max-pages`. HypeDC
         search needs `HYPEDC_HEADLESS=false` + a possible CAPTCHA solve.
         Same `--name` flag works on
-        hypedc/footlocker/jdsports/platypus/salomon.
-      command: cd sneaker-scout-backend && python -m platypus.search_scraper --name "adidas Samba OG"
+        hypedc/footlocker/jdsports/platypus/salomon. Dependencies are
+        managed with uv — run via `uv run` (env vars go before it, e.g.
+        `HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper ...`).
+      command: cd sneaker-scout-backend && uv run python -m platypus.search_scraper --name "adidas Samba OG"
     - name: search-scrape-bulk-from-hypedc
       description: |
         Bulk use: auto-extract the sneaker names from a Hype DC scrape JSON
@@ -821,10 +823,10 @@ x-scraper-cli:
         URL-resolution phase; the deep result scrape is a separate, longer
         phase bounded by per-PDP politeness sleeps. See sneaker_scout-jtv.
 
-          python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
+          uv run python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
             -> jsons/platypus_mens_search_products.json
-          python -m data_upload.run_update --file=jsons/platypus_mens_search_products.json
-      command: cd sneaker-scout-backend && python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
+          uv run python -m data_upload.run_update --file=jsons/platypus_mens_search_products.json
+      command: cd sneaker-scout-backend && uv run python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
     - name: gender-flag-usage
       description: |
         Per-retailer invocation, one process per gender. Each writes a
