@@ -796,6 +796,35 @@ x-scraper-cli:
         One-off jdsports scrape inside the backend container. Required
         path until entrypoint.sh learns about jdsports.
       command: docker-compose run --rm backend python -m backend.jdsports.pagination_scraper
+    - name: search-scrape-local
+      description: |
+        Search-driven scraper. Each retailer has a `search_scraper.py`
+        beside its `pagination_scraper.py` that drives the site's on-page
+        search bar for a single sneaker name (human-like typing), reads the
+        results URL, and scrapes every result via the retailer's existing
+        strict-mode `scrape_all_pages`. Output is one aggregated, de-duped
+        JSON: `jsons/<retailer>_search_products.json` (override with --out).
+        Flags: `--name` OR `--names-from` (mutually exclusive, one required),
+        `--gender` (default mens), `--out`, `--limit`, `--max-pages`. HypeDC
+        search needs `HYPEDC_HEADLESS=false` + a possible CAPTCHA solve.
+        Same `--name` flag works on
+        hypedc/footlocker/jdsports/platypus/salomon.
+      command: cd sneaker-scout-backend && python -m platypus.search_scraper --name "adidas Samba OG"
+    - name: search-scrape-bulk-from-hypedc
+      description: |
+        Bulk use: auto-extract the sneaker names from a Hype DC scrape JSON
+        and search each on another retailer, so every shoe Hype carries is
+        covered without supplying URLs by hand. Names are de-duped; results
+        are merged + de-duped (by `sneaker.product_url`) into one file ready
+        for `data_upload.run_update`. `--limit` caps the number of names.
+        Throughput target ~6s/search (≈100 names in ≤10 min) for the
+        URL-resolution phase; the deep result scrape is a separate, longer
+        phase bounded by per-PDP politeness sleeps. See sneaker_scout-jtv.
+
+          python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
+            -> jsons/platypus_search_products.json
+          python -m data_upload.run_update --file=jsons/platypus_search_products.json
+      command: cd sneaker-scout-backend && python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
     - name: gender-flag-usage
       description: |
         Per-retailer invocation, one process per gender. Each writes a
