@@ -803,7 +803,7 @@ x-scraper-cli:
         search bar for a single sneaker name (human-like typing), reads the
         results URL, and scrapes every result via the retailer's existing
         strict-mode `scrape_all_pages`. Output is one aggregated, de-duped
-        JSON: `jsons/<retailer>_search_products.json` (override with --out).
+        JSON: `jsons/<retailer>_<gender>_search_products.json` (override with --out).
         Flags: `--name` OR `--names-from` (mutually exclusive, one required),
         `--gender` (default mens), `--out`, `--limit`, `--max-pages`. HypeDC
         search needs `HYPEDC_HEADLESS=false` + a possible CAPTCHA solve.
@@ -822,8 +822,8 @@ x-scraper-cli:
         phase bounded by per-PDP politeness sleeps. See sneaker_scout-jtv.
 
           python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
-            -> jsons/platypus_search_products.json
-          python -m data_upload.run_update --file=jsons/platypus_search_products.json
+            -> jsons/platypus_mens_search_products.json
+          python -m data_upload.run_update --file=jsons/platypus_mens_search_products.json
       command: cd sneaker-scout-backend && python -m platypus.search_scraper --names-from=jsons/hypedc_mens_products.json --gender=mens
     - name: gender-flag-usage
       description: |
