@@ -164,7 +164,16 @@ HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper \
 
 | Flag | Default | Meaning |
 |------|---------|---------|
-| `--limit=N` | all names | Cap the number of names taken from `--names-from`. Truncates the input list before any searching begins — useful for smoke-testing a bulk run without waiting for all 80+ names. Has no effect with `--name`. |
+| `--limit=N` | all names | Take only the first N unique names from `--names-from`. Each name becomes **one search bar interaction** (type the name, press Enter, scrape the results page). So `--limit=3` means 3 searches — not 3 products. Each of those 3 searches can still yield many pages of results with many products each. Has no effect with `--name`. |
+
+> **`--limit` vs `--max-products`:** `--limit=3` controls how many *times you search* (3 browser interactions, potentially hundreds of products). `--max-products=3` controls how many *products you keep per search* (all searches run, but each result is trimmed to 3). They are orthogonal. Example with an 83-name Hype DC file:
+>
+> | Flags | Searches run | Products kept |
+> |-------|-------------|---------------|
+> | *(none)* | 83 | all (~60/search typical) |
+> | `--limit=3` | 3 | all from those 3 searches |
+> | `--max-products=3` | 83 | up to 3 per search (≤249 total) |
+> | `--limit=3 --max-products=3` | 3 | up to 3 per search (≤9 total) |
 
 #### Controlling how much is scraped per search result
 
