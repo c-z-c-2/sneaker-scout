@@ -123,15 +123,13 @@ PLATYPUS_HEADLESS=false uv run python -m platypus.search_scraper \
 
 ### Salomon
 
-Salomon has no headless toggle — it always runs headless (hardcoded). The headed env var does nothing here.
-
 ```bash
 # 3-search smoke test
-uv run python -m salomon.search_scraper \
+SALOMON_HEADLESS=false uv run python -m salomon.search_scraper \
     --names-from=jsons/hypedc_products.json --gender=mens --limit=3
 
 # Full run
-uv run python -m salomon.search_scraper \
+SALOMON_HEADLESS=false uv run python -m salomon.search_scraper \
     --names-from=jsons/hypedc_products.json --gender=mens
 # output: jsons/salomon_mens_search_products.json
 ```
