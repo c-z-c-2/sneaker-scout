@@ -121,20 +121,39 @@ navigation/orchestration lives in `utils/search_nav.py`; name extraction in
 
 ### Verification status (as of 2026-06-16)
 
-The navigation + orchestration + de-dupe are implemented and unit-tested, but
-the search mode is **not yet verified working end-to-end on live sites**.
-Known open issues from live Platypus debugging:
+| Retailer | Search → URL | PDP scraping | Upload to staging | Notes |
+|----------|-------------|--------------|-------------------|-------|
+| **JD Sports** | ✓ | ✓ | ✓ | Fully verified |
+| **Salomon** | ✓ | ✓ | ✓ | Fully verified |
+| **Footlocker** | ✓ | ⚠ crashes in container | not yet run | PDP loop hits Chrome memory limit after ~7 PDPs in headless container; works on macOS |
+| **Platypus** | ✓ | ✓ | not yet run | Verified in an earlier session (sneaker_scout-0fm) |
+| **HypeDC** | not tested | — | — | Requires headed Chrome + CAPTCHA solve; skip until other retailers confirmed |
 
-1. **Search-results card parsing** — Platypus's search-results cards have a
-   different DOM than its category cards (image-anchor with the name in the
-   `<img alt>` / href query string and no price text-block), so the listing
-   parser can extract 0 products. Needs a search-card extractor.
-2. **Fuzzy relevance** — free-text search drifts: searching "Samba OG"
-   returned Gazelle products. "Scrape all results as-is" would import the
-   wrong shoes, so a name-match relevance filter is likely needed.
+**Known selector fixes applied** (do not revert):
 
-Treat search bulk runs as tests, not trusted data pulls, until a smoke run is
-confirmed to return correct, parsed products for the searched name.
+- `jdsports/search_scraper.py` — box selector corrected to `input#srchInput`
+  (was `input#searchTerm`, which never existed on jd-sports.com.au).
+- `footlocker/search_scraper.py` — box selector corrected to
+  `input#HeaderSearch--desktop_search_query`; added `results_url_marker="/search"`
+  and `reload_after_url_marker=True`. Footlocker's search form uses SPA pushState
+  navigation, so the product grid never renders in headless Chrome without a
+  forced `driver.get()` reload after the URL flips.
+- `utils/search_nav.py` — `_clear_box()` helper falls back to JS
+  (`arguments[0].value = ''`) when Selenium's native `.clear()` raises
+  `InvalidElementStateException`. Needed for Salomon's SearchSpring autocomplete
+  input.
+
+**Open issues (Platypus, from live debugging):**
+
+1. **Search-results card parsing** — Platypus search-results cards have a
+   different DOM than its category cards, so the listing parser can extract 0
+   products on some search terms. May need a search-card extractor.
+2. **Fuzzy relevance** — free-text search drifts (e.g. "Samba OG" returns
+   Gazelle products). "Scrape all results as-is" can import the wrong shoes;
+   a name-match relevance filter may be needed.
+
+For JD Sports and Salomon, bulk `--names-from` runs are ready to go. For
+Footlocker, run from macOS (not the dev container) to avoid the tab crash.
 
 ---
 
