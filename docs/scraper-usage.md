@@ -80,18 +80,75 @@ Intended bulk use: feed it a Hype DC scrape output with `--names-from` to
 cover the other retailers' versions of Hype's catalogue without hand-supplying
 URLs.
 
+All commands run from `sneaker-scout-backend/`. Always run headed (`HEADLESS=false`) so you can watch the browser and catch stalls early. The `--limit=3` flag caps the bulk name list to 3 searches for smoke-testing.
+
+### JD Sports
+
 ```bash
-cd sneaker-scout-backend
+# 3-search smoke test
+JDSPORTS_HEADLESS=false uv run python -m jdsports.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens --limit=3
 
-# Smoke-test a single name (headed, so you can watch the search)
+# Full run (~83 names from the Hype DC file, ~10–15 min)
+JDSPORTS_HEADLESS=false uv run python -m jdsports.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens
+# output: jsons/jdsports_mens_search_products.json
+```
+
+### Footlocker
+
+```bash
+# 3-search smoke test
+FOOTLOCKER_HEADLESS=false uv run python -m footlocker.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens --limit=3
+
+# Full run
+FOOTLOCKER_HEADLESS=false uv run python -m footlocker.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens
+# output: jsons/footlocker_mens_search_products.json
+```
+
+### Platypus
+
+```bash
+# 3-search smoke test
 PLATYPUS_HEADLESS=false uv run python -m platypus.search_scraper \
-    --name "Samba OG" --max-pages=1
+    --names-from=jsons/hypedc_products.json --gender=mens --limit=3
 
-# Bulk: search every name auto-extracted from a Hype DC scrape (intended use)
-uv run python -m platypus.search_scraper \
-    --names-from=jsons/hypedc_mens_products.json --gender=mens
-uv run python -m platypus.search_scraper \
-    --names-from=jsons/hypedc_womens_products.json --gender=womens
+# Full run
+PLATYPUS_HEADLESS=false uv run python -m platypus.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens
+# output: jsons/platypus_mens_search_products.json
+```
+
+### Salomon
+
+Salomon has no headless toggle — it always runs headless (hardcoded). The headed env var does nothing here.
+
+```bash
+# 3-search smoke test
+uv run python -m salomon.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens --limit=3
+
+# Full run
+uv run python -m salomon.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens
+# output: jsons/salomon_mens_search_products.json
+```
+
+### HypeDC
+
+Requires headed Chrome and a manual CAPTCHA solve. Skip until the other retailers are confirmed working.
+
+```bash
+# 3-search smoke test
+HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens --limit=3
+
+# Full run
+HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper \
+    --names-from=jsons/hypedc_products.json --gender=mens
+# output: jsons/hypedc_mens_search_products.json
 ```
 
 ### Flags
