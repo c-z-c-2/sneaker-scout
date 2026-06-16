@@ -151,14 +151,80 @@ HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper \
 
 ### Flags
 
-| Flag | Meaning |
-|------|---------|
-| `--name "<text>"` | Search a single name. Mutually exclusive with `--names-from`; one required. |
-| `--names-from=<path>` | Auto-extract names from a Hype DC scrape JSON and search each. |
-| `--gender=mens\|womens` | Tags scraped rows and sets the output filename suffix (default `mens`). |
-| `--limit=N` | Only search the first N names from the list (quick smoke test of a bulk run). |
-| `--max-pages=N` | Pages of results to scrape per search term (default 3). |
-| `--out=<path>` | Override the output path. |
+#### Input / output
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--name "<text>"` | — | Search a single name. Mutually exclusive with `--names-from`; one is required. |
+| `--names-from=<path>` | — | Extract sneaker names from a Hype DC scrape JSON and search each. |
+| `--gender=mens\|womens` | `mens` | Tags every scraped row's `colorway.gender` and sets the output filename suffix. |
+| `--out=<path>` | `jsons/<retailer>_<gender>_search_products.json` | Override the output path. The default keeps mens/womens runs from overwriting each other. |
+
+#### Controlling how many names are searched
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--limit=N` | all names | Cap the number of names taken from `--names-from`. Truncates the input list before any searching begins — useful for smoke-testing a bulk run without waiting for all 80+ names. Has no effect with `--name`. |
+
+#### Controlling how much is scraped per search result
+
+Each search term resolves to a results page (e.g. `?q=Nike+Air+Max+90`). The following flags control how deeply that results page is scraped.
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--max-pages=N` | `3` | Number of listing pages to fetch per search result. Search-result pages are short (typically 12–24 cards), so 3 pages covers most queries. Raise this if you need exhaustive coverage; lower it for speed. |
+| `--limit-per-page=N` | all cards | Maximum products scraped **per listing page**. Applied inside the retailer's own page-scraper before any product detail pages (PDPs) are visited. Useful when combined with `--max-pages` to tightly control how many PDPs are hit in total (e.g. `--max-pages=2 --limit-per-page=5` = at most 10 PDPs across two pages). |
+| `--max-products=N` | all | Maximum products **kept per search result**, counted after all pages have been scraped. This is a post-scrape slice: the scraper finishes walking pages normally, then trims the list to N before the merge/de-dupe step. Use this when you want a fixed-size result regardless of how many pages or cards were found (e.g. `--max-products=5` keeps the top 5 results from however many pages). |
+
+**How the three scrape-limit flags interact:**
+
+```
+For each search term:
+  ┌─ walk up to --max-pages pages ──────────────────────────────────────────┐
+  │  for each page:                                                          │
+  │    scrape up to --limit-per-page cards  (skips remaining cards on page) │
+  │  → produces a list of products                                           │
+  │                                                                          │
+  │  slice [:--max-products]                (trims the final list)           │
+  └──────────────────────────────────────────────────────────────────────────┘
+  → result list per term goes into the merge+de-dupe step
+```
+
+`--limit-per-page` and `--max-products` are independent: one caps at the page level, the other caps the final per-term total. You can use either, both, or neither.
+
+#### Examples
+
+```bash
+cd sneaker-scout-backend
+
+# Single smoke-test — one name, first page only, top 3 results
+uv run python -m salomon.search_scraper \
+    --name "Salomon XT-6" \
+    --max-pages=1 \
+    --max-products=3
+
+# Bulk run limited to the first 5 names, 1 page each, at most 5 products per result
+# (fast sanity check that the scraper is wired correctly before a full run)
+PLATYPUS_HEADLESS=false uv run python -m platypus.search_scraper \
+    --names-from=jsons/hypedc_mens_products.json --gender=mens \
+    --limit=5 --max-pages=1 --max-products=5
+
+# Full run — all names, default 3 pages, no per-result cap
+JDSPORTS_HEADLESS=false uv run python -m jdsports.search_scraper \
+    --names-from=jsons/hypedc_mens_products.json --gender=mens
+
+# Full run with a per-result cap — keeps catalogue broad but avoids deep-scraping
+# noisy results (e.g. "Nike Air Max 90" returning 60+ products from 3 pages)
+FOOTLOCKER_HEADLESS=false uv run python -m footlocker.search_scraper \
+    --names-from=jsons/hypedc_mens_products.json --gender=mens \
+    --max-products=10
+
+# Tight PDP budget — 2 pages × 4 cards = at most 8 PDPs per search term
+# (useful when PDPs are slow or crash-prone, e.g. Footlocker in the container)
+FOOTLOCKER_HEADLESS=false uv run python -m footlocker.search_scraper \
+    --names-from=jsons/hypedc_mens_products.json --gender=mens \
+    --max-pages=2 --limit-per-page=4
+```
 
 Environment variables go **before** `uv run`, e.g. headed HypeDC:
 `HYPEDC_HEADLESS=false uv run python -m hypedc.search_scraper --name "..."`.
