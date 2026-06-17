@@ -254,7 +254,7 @@ navigation/orchestration lives in `utils/search_nav.py`; name extraction in
 | Retailer | Search → URL | PDP scraping | Upload to staging | Notes |
 |----------|-------------|--------------|-------------------|-------|
 | **JD Sports** | ✓ | ✓ | ✓ | Fully verified |
-| **Salomon** | ✓ | ✓ | ✓ | Fully verified |
+| **Salomon** | ✓ | ✓ | ✗ not yet run | Selectors verified (sneaker_scout-bgk closed after 1-product smoke test); bulk scrape + upload runbook not completed — see sneaker_scout-0ul |
 | **Footlocker** | ✓ | ⚠ crashes in container | not yet run | PDP loop hits Chrome memory limit after ~7 PDPs in headless container; works on macOS |
 | **Platypus** | ✓ | ✓ | not yet run | Verified in an earlier session (sneaker_scout-0fm) |
 | **HypeDC** | not tested | — | — | Requires headed Chrome + CAPTCHA solve; skip until other retailers confirmed |
