@@ -82,6 +82,36 @@ URLs.
 
 All commands run from `sneaker-scout-backend/`. Always run headed (`HEADLESS=false`) so you can watch the browser and catch stalls early. The `--limit=3` flag caps the bulk name list to 3 searches for smoke-testing.
 
+### Previewing the search names (`utils.show_names`)
+
+Before kicking off a bulk run, you can eyeball the exact list of names the
+search scrapers would search. `utils.show_names` is a **read-only** viewer over
+the same `extract_names()` the scrapers use, so the list never drifts from
+what actually gets searched. It changes nothing in the pipeline.
+
+```bash
+cd sneaker-scout-backend
+
+# Print every unique name from the Hype DC scrape (default jsons/hypedc_products.json)
+uv run python -m utils.show_names
+
+# Prefix the brand, e.g. "Nike Air Max 90"
+uv run python -m utils.show_names --include-brand
+
+# Read a different scrape JSON, or cap the count
+uv run python -m utils.show_names --names-from=jsons/hypedc_products.json --limit=20
+```
+
+Names print to **stdout** (one per line, so `| grep`, `| sort`, or `> names.txt`
+all work); the `N unique names` summary goes to **stderr** so a redirected list
+stays clean.
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--names-from=<path>` | `jsons/hypedc_products.json` | Hype DC scrape JSON to read names from. |
+| `--include-brand` | off | Prefix each name with its brand. |
+| `--limit=N` | all | Show only the first N unique names. |
+
 ### JD Sports
 
 ```bash
